@@ -5,6 +5,7 @@ const cors = require("cors");
 
 // Importar rutas (ajusta la ruta según tu estructura)
 const booksRoutes = require("./routes/books");
+const metadataRoutes = require("./routes/metadata");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -24,7 +25,7 @@ mongoose
 
 // Rutas
 app.use("/api/books", booksRoutes);
-
+app.use("/api/metadata", metadataRoutes);
 // Ruta base
 app.get("/", (req, res) => {
   res.send("Servidor backend funcionando");
