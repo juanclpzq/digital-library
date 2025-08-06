@@ -4,279 +4,215 @@ export default {
   theme: {
     extend: {
       // ============================================================================
-      // GEN X SOFTCLUB COLOR PALETTE
+      // DUAL THEME COLOR SYSTEM - SOFTCLUB + GLASS HEAVY
       // ============================================================================
       colors: {
-        // Primary Softclub Colors
+        // Softclub Theme Colors - Gen X Nostalgic Palette
         "soft-cyan": "#7FDBFF",
         "lavender-mist": "#B19CD9",
         "peachy-keen": "#FFAAA5",
         "mint-dream": "#7FFFE0",
         "sunset-coral": "#FF6B9D",
-
-        // Neutrals
         "cloud-white": "#F8F9FA",
         "midnight-navy": "#001122",
         "silver-matte": "#E8E8E8",
 
-        // Extended Palette
-        "aqua-mist": "#80E5FF",
-        "lavender-blush": "#E6D7FF",
-        "peach-whisper": "#FFD4D1",
-        "mint-frost": "#B8FFE6",
-        "coral-glow": "#FFB3D1",
-
-        // Semantic Colors (Softclub style)
-        success: "#7FFFE0",
-        warning: "#FFAAA5",
-        error: "#FF6B9D",
-        info: "#7FDBFF",
+        // Glass Heavy uses the same base colors with opacity modifiers
+        "glass-cyan": "#7FDBFF",
+        "glass-lavender": "#B19CD9",
+        "glass-peach": "#FFAAA5",
+        "glass-mint": "#7FFFE0",
+        "glass-coral": "#FF6B9D",
       },
 
       // ============================================================================
-      // TYPOGRAPHY - CLEAN & FRIENDLY
+      // ENHANCED OPACITY SCALE FOR GLASS EFFECTS
       // ============================================================================
-      fontFamily: {
-        softclub: ["Inter", "Helvetica Neue", "system-ui", "sans-serif"],
-        "softclub-display": ["SF Pro Display", "Inter", "sans-serif"],
-        "softclub-mono": ["JetBrains Mono", "Monaco", "Consolas", "monospace"],
-      },
-
-      fontSize: {
-        xs: ["0.75rem", { lineHeight: "1.5" }],
-        sm: ["0.875rem", { lineHeight: "1.5" }],
-        base: ["1rem", { lineHeight: "1.5" }],
-        lg: ["1.125rem", { lineHeight: "1.5" }],
-        xl: ["1.25rem", { lineHeight: "1.5" }],
-        "2xl": ["1.5rem", { lineHeight: "1.4" }],
-        "3xl": ["1.875rem", { lineHeight: "1.3" }],
-        "4xl": ["2.25rem", { lineHeight: "1.2" }],
-        "5xl": ["3rem", { lineHeight: "1.1" }],
-        "6xl": ["3.75rem", { lineHeight: "1" }],
+      opacity: {
+        15: "0.15",
+        18: "0.18",
+        22: "0.22",
+        25: "0.25",
+        28: "0.28",
+        35: "0.35",
+        45: "0.45",
+        65: "0.65",
       },
 
       // ============================================================================
-      // SPACING - GENEROUS & COMFORTABLE
-      // ============================================================================
-      spacing: {
-        comfortable: "2rem", // 32px
-        cozy: "1.5rem", // 24px
-        intimate: "1rem", // 16px
-        spacious: "3rem", // 48px
-        expansive: "4rem", // 64px
-
-        // Extended spacing for larger layouts
-        18: "4.5rem", // 72px
-        20: "5rem", // 80px
-        24: "6rem", // 96px
-        28: "7rem", // 112px
-        32: "8rem", // 128px
-      },
-
-      // ============================================================================
-      // BORDER RADIUS - SOFT & ROUNDED
-      // ============================================================================
-      borderRadius: {
-        softclub: "1.5rem", // 24px - Main card radius
-        gentle: "1rem", // 16px - Secondary elements
-        pill: "9999px", // Full rounded
-        button: "1rem", // 16px - Buttons
-        input: "0.75rem", // 12px - Form inputs
-        modal: "2rem", // 32px - Modals
-
-        // Extended radius options
-        "4xl": "2rem", // 32px
-        "5xl": "2.5rem", // 40px
-        "6xl": "3rem", // 48px
-      },
-
-      // ============================================================================
-      // BOX SHADOWS - SOFT GLOWS
-      // ============================================================================
-      boxShadow: {
-        // Soft shadows
-        soft: "0 25px 50px -12px rgba(177, 156, 217, 0.15)",
-        gentle:
-          "0 10px 25px -3px rgba(127, 219, 255, 0.1), 0 4px 6px -2px rgba(127, 219, 255, 0.05)",
-        floating:
-          "0 20px 40px -4px rgba(0, 17, 34, 0.08), 0 8px 16px -4px rgba(0, 17, 34, 0.04)",
-
-        // Hover shadows
-        "soft-hover": "0 35px 60px -12px rgba(177, 156, 217, 0.25)",
-        "gentle-hover": "0 20px 40px -4px rgba(127, 219, 255, 0.2)",
-        "floating-hover": "0 25px 50px -12px rgba(0, 17, 34, 0.15)",
-
-        // Colored glows
-        "cyan-glow": "0 20px 40px -4px rgba(127, 219, 255, 0.2)",
-        "lavender-glow": "0 20px 40px -4px rgba(177, 156, 217, 0.2)",
-        "peach-glow": "0 20px 40px -4px rgba(255, 170, 165, 0.2)",
-        "mint-glow": "0 20px 40px -4px rgba(127, 255, 224, 0.2)",
-        "coral-glow": "0 20px 40px -4px rgba(255, 107, 157, 0.2)",
-
-        // Inner shadows
-        "inset-soft": "inset 0 2px 8px 0 rgba(177, 156, 217, 0.1)",
-        "inset-gentle": "inset 0 1px 4px 0 rgba(0, 17, 34, 0.05)",
-      },
-
-      // ============================================================================
-      // BACKDROP BLUR - GLASSMORPHISM EFFECTS
+      // ADVANCED BACKDROP BLUR FOR GLASS INTENSITY SYSTEM
       // ============================================================================
       backdropBlur: {
-        soft: "8px",
-        gentle: "12px",
-        strong: "16px",
+        "glass-whisper": "6px",
+        "glass-light": "12px",
+        "glass-medium": "20px",
+        "glass-heavy": "32px",
+        "glass-extreme": "48px",
       },
 
       // ============================================================================
-      // ANIMATIONS & TRANSITIONS
+      // DUAL SHADOW SYSTEMS
       // ============================================================================
-      transitionDuration: {
-        400: "400ms",
-        600: "600ms",
-        800: "800ms",
-        1200: "1200ms",
-      },
+      boxShadow: {
+        // Softclub Shadows - Gentle & Optimistic
+        soft: "0 25px 50px -12px rgba(177, 156, 217, 0.15), 0 10px 20px -5px rgba(127, 219, 255, 0.1)",
+        gentle:
+          "0 10px 25px -3px rgba(127, 219, 255, 0.1), 0 4px 6px -2px rgba(177, 156, 217, 0.1)",
 
-      transitionTimingFunction: {
-        gentle: "cubic-bezier(0.25, 0.25, 0, 1)",
-        soft: "cubic-bezier(0.4, 0, 0.2, 1)",
-        "bounce-soft": "cubic-bezier(0.68, -0.55, 0.265, 1.55)",
-      },
-
-      // ============================================================================
-      // GRADIENTS - PRE-DEFINED BACKGROUNDS
-      // ============================================================================
-      backgroundImage: {
-        // Hero gradients
-        "gradient-hero":
-          "linear-gradient(135deg, #7FDBFF 0%, #B19CD9 50%, #FFAAA5 100%)",
-        "gradient-hero-reverse":
-          "linear-gradient(45deg, #FFAAA5 0%, #B19CD9 50%, #7FDBFF 100%)",
-        "gradient-dreamy":
-          "linear-gradient(90deg, #B19CD9 0%, #7FFFE0 50%, #80E5FF 100%)",
-        "gradient-sunset":
-          "linear-gradient(135deg, #FF6B9D 0%, #FFAAA5 50%, #FFD4D1 100%)",
-
-        // Page backgrounds
-        "gradient-page":
-          "linear-gradient(135deg, #F8F9FA 0%, rgba(127, 219, 255, 0.05) 50%, rgba(177, 156, 217, 0.1) 100%)",
-        "gradient-dashboard":
-          "linear-gradient(135deg, #F8F9FA 0%, rgba(128, 229, 255, 0.08) 50%, rgba(255, 212, 209, 0.12) 100%)",
-
-        // Card gradients
-        "gradient-card":
-          "linear-gradient(135deg, rgba(248, 249, 250, 0.6) 0%, rgba(232, 232, 232, 0.2) 50%, rgba(248, 249, 250, 0.8) 100%)",
-        "gradient-card-hover":
-          "linear-gradient(135deg, rgba(248, 249, 250, 0.8) 0%, rgba(127, 219, 255, 0.1) 50%, rgba(230, 215, 255, 0.2) 100%)",
+        // Glass Heavy Shadows - Deep & Premium
+        "glass-sm":
+          "0 4px 16px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.3)",
+        "glass-md":
+          "0 8px 24px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.4)",
+        "glass-lg":
+          "0 12px 32px rgba(0, 0, 0, 0.15), inset 0 2px 0 rgba(255, 255, 255, 0.5)",
+        "glass-xl":
+          "0 16px 48px rgba(0, 0, 0, 0.18), inset 0 2px 0 rgba(255, 255, 255, 0.6)",
+        "glass-2xl":
+          "0 24px 64px rgba(0, 0, 0, 0.22), inset 0 3px 0 rgba(255, 255, 255, 0.7)",
       },
 
       // ============================================================================
-      // KEYFRAMES - CUSTOM ANIMATIONS
+      // ENHANCED BLUR UTILITIES
       // ============================================================================
+      blur: {
+        "glass-subtle": "4px",
+        "glass-soft": "8px",
+        "glass-medium": "16px",
+        "glass-strong": "24px",
+        "glass-intense": "40px",
+      },
+
+      // ============================================================================
+      // CUSTOM FONT FAMILIES
+      // ============================================================================
+      fontFamily: {
+        softclub: ["Inter", "system-ui", "sans-serif"],
+        glass: ["Inter", "Helvetica Neue", "Arial", "sans-serif"],
+      },
+
+      // ============================================================================
+      // CUSTOM ANIMATIONS
+      // ============================================================================
+      animation: {
+        "soft-pulse": "soft-pulse 2s ease-in-out infinite",
+        float: "float 6s ease-in-out infinite",
+        "glass-shimmer": "glass-shimmer 3s ease-in-out infinite",
+        "glass-ripple": "glass-ripple 0.6s ease-out",
+        condensation: "condensation 4s ease-in-out infinite",
+      },
+
       keyframes: {
-        "gentle-bounce": {
-          "0%, 100%": { transform: "translateY(0)" },
-          "50%": { transform: "translateY(-8px)" },
-        },
         "soft-pulse": {
-          "0%, 100%": { opacity: "1" },
-          "50%": { opacity: "0.8" },
-        },
-        "gradient-shift": {
-          "0%": { backgroundPosition: "0% 50%" },
-          "50%": { backgroundPosition: "100% 50%" },
-          "100%": { backgroundPosition: "0% 50%" },
+          "0%, 100%": { opacity: 1, transform: "scale(1)" },
+          "50%": { opacity: 0.8, transform: "scale(1.02)" },
         },
         float: {
           "0%, 100%": { transform: "translateY(0px)" },
           "50%": { transform: "translateY(-10px)" },
         },
-        glow: {
-          "0%, 100%": { boxShadow: "0 0 20px rgba(127, 219, 255, 0.3)" },
-          "50%": { boxShadow: "0 0 40px rgba(177, 156, 217, 0.4)" },
+        "glass-shimmer": {
+          "0%": { transform: "translateX(-100%) skewX(-15deg)" },
+          "100%": { transform: "translateX(200%) skewX(-15deg)" },
+        },
+        "glass-ripple": {
+          "0%": { transform: "scale(0)", opacity: 1 },
+          "100%": { transform: "scale(1)", opacity: 0 },
+        },
+        condensation: {
+          "0%, 100%": { opacity: 0.3, transform: "scale(1)" },
+          "50%": { opacity: 0.8, transform: "scale(1.1)" },
         },
       },
 
-      animation: {
-        "gentle-bounce": "gentle-bounce 2s ease-in-out infinite",
-        "soft-pulse": "soft-pulse 3s ease-in-out infinite",
-        "gradient-shift": "gradient-shift 6s ease-in-out infinite",
-        float: "float 4s ease-in-out infinite",
-        glow: "glow 3s ease-in-out infinite",
+      // ============================================================================
+      // GRADIENT UTILITIES
+      // ============================================================================
+      backgroundImage: {
+        "gradient-softclub":
+          "linear-gradient(135deg, #F8F9FA 0%, #7FDBFF 25%, #B19CD9 50%, #FFAAA5 75%, #7FFFE0 100%)",
+        "gradient-glass":
+          "linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)",
+        "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
+        "gradient-conic":
+          "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
       },
 
       // ============================================================================
-      // SCALE - GENTLE TRANSFORMATIONS
+      // SPACING EXTENSIONS
       // ============================================================================
-      scale: {
-        102: "1.02",
-        105: "1.05",
-        98: "0.98",
-        95: "0.95",
+      spacing: {
+        18: "4.5rem",
+        88: "22rem",
+        128: "32rem",
       },
 
       // ============================================================================
-      // Z-INDEX - LAYERING SYSTEM
+      // BORDER RADIUS EXTENSIONS
+      // ============================================================================
+      borderRadius: {
+        "4xl": "2rem",
+        "5xl": "2.5rem",
+      },
+
+      // ============================================================================
+      // Z-INDEX SCALE
       // ============================================================================
       zIndex: {
-        tooltip: "100",
-        modal: "200",
-        dropdown: "150",
-        overlay: "175",
-        navigation: "50",
+        60: "60",
+        70: "70",
+        80: "80",
+        90: "90",
+        100: "100",
       },
 
       // ============================================================================
-      // ASPECT RATIOS - FOR BOOK COVERS & MEDIA
+      // BACKDROP FILTERS (ADDITIONAL)
       // ============================================================================
-      aspectRatio: {
-        book: "3/4", // Standard book cover ratio
-        card: "4/3", // Card aspect ratio
-        golden: "1.618/1", // Golden ratio
+      backdropSaturate: {
+        25: ".25",
+        75: ".75",
+        125: "1.25",
+        200: "2",
+      },
+
+      // ============================================================================
+      // TRANSITION TIMING FUNCTIONS
+      // ============================================================================
+      transitionTimingFunction: {
+        "ease-soft": "cubic-bezier(0.25, 0.25, 0, 1)",
+        "ease-glass": "cubic-bezier(0.16, 1, 0.3, 1)",
       },
     },
   },
   plugins: [
-    // ============================================================================
-    // CUSTOM UTILITIES - SOFTCLUB SPECIFIC
-    // ============================================================================
+    // Custom plugin for glass effects
     function ({ addUtilities }) {
       const newUtilities = {
-        // Glass effect utilities
-        ".glass-soft": {
-          backgroundColor: "rgba(248, 249, 250, 0.6)",
-          backdropFilter: "blur(8px)",
-          border: "1px solid rgba(248, 249, 250, 0.2)",
+        ".glass-whisper": {
+          backdropFilter: "blur(6px) saturate(150%)",
+          backgroundColor: "rgba(255, 255, 255, 0.1)",
+          border: "1px solid rgba(255, 255, 255, 0.2)",
         },
-        ".glass-gentle": {
-          backgroundColor: "rgba(248, 249, 250, 0.4)",
-          backdropFilter: "blur(12px)",
-          border: "1px solid rgba(127, 219, 255, 0.2)",
+        ".glass-light": {
+          backdropFilter: "blur(12px) saturate(150%)",
+          backgroundColor: "rgba(255, 255, 255, 0.15)",
+          border: "1px solid rgba(255, 255, 255, 0.25)",
         },
-
-        // Glow utilities
-        ".glow-soft": {
-          boxShadow: "0 0 30px rgba(127, 219, 255, 0.2)",
+        ".glass-medium": {
+          backdropFilter: "blur(20px) saturate(150%)",
+          backgroundColor: "rgba(255, 255, 255, 0.2)",
+          border: "1px solid rgba(255, 255, 255, 0.3)",
         },
-        ".glow-lavender": {
-          boxShadow: "0 0 30px rgba(177, 156, 217, 0.3)",
+        ".glass-heavy": {
+          backdropFilter: "blur(32px) saturate(150%)",
+          backgroundColor: "rgba(255, 255, 255, 0.25)",
+          border: "1px solid rgba(255, 255, 255, 0.35)",
         },
-        ".glow-peach": {
-          boxShadow: "0 0 30px rgba(255, 170, 165, 0.3)",
-        },
-
-        // Text gradients
-        ".text-gradient-softclub": {
-          background: "linear-gradient(135deg, #7FDBFF 0%, #B19CD9 100%)",
-          backgroundClip: "text",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-        },
-
-        // Scroll behaviors
-        ".scroll-smooth-soft": {
-          scrollBehavior: "smooth",
-          scrollPadding: "2rem",
+        ".glass-extreme": {
+          backdropFilter: "blur(48px) saturate(150%)",
+          backgroundColor: "rgba(255, 255, 255, 0.3)",
+          border: "1px solid rgba(255, 255, 255, 0.4)",
         },
       };
 

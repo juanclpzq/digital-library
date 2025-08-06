@@ -7,7 +7,7 @@ import React, { useState, forwardRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/theme/ThemeProvider";
 import GlassShimmer from "./effects/GlassShimmer";
-import Refraction from "./effects/Refrations";
+import Refraction from "./effects/Refraction";
 
 // ============================================================================
 // INPUT PROPS INTERFACE (SAME AS SOFTCLUB + GLASS EXTRAS)

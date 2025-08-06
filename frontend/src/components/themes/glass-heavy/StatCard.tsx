@@ -3,12 +3,13 @@
 // FILE LOCATION: src/components/themes/glass-heavy/StatCard.tsx
 // ============================================================================
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/theme/ThemeProvider";
 import CardGlassHeavy from "./Card";
 import GlassShimmer from "./effects/GlassShimmer";
 import Condensation from "./effects/Condensation";
+import Refraction from "./effects/Refraction";
 
 // ============================================================================
 // STAT CARD PROPS INTERFACE (SAME AS SOFTCLUB + GLASS EXTRAS)
@@ -42,7 +43,10 @@ export interface StatCardProps {
 // GLASS HEAVY GRADIENT MAPPINGS
 // ============================================================================
 
-const getGlassGradientStyles = (gradient: StatCardProps["gradient"], customGradient?: string) => {
+const getGlassGradientStyles = (
+  gradient: StatCardProps["gradient"],
+  customGradient?: string
+) => {
   if (gradient === "custom" && customGradient) {
     return customGradient;
   }
@@ -51,42 +55,44 @@ const getGlassGradientStyles = (gradient: StatCardProps["gradient"], customGradi
     mint: "bg-gradient-to-br from-emerald-400/30 via-teal-400/20 to-cyan-400/25",
     cyan: "bg-gradient-to-br from-cyan-400/30 via-blue-400/25 to-indigo-400/20",
     peach: "bg-gradient-to-br from-orange-400/25 via-pink-400/30 to-red-400/20",
-    lavender: "bg-gradient-to-br from-purple-400/30 via-pink-400/25 to-rose-400/20",
-    coral: "bg-gradient-to-br from-pink-400/25 via-rose-400/30 to-orange-400/20",
+    lavender:
+      "bg-gradient-to-br from-purple-400/30 via-pink-400/25 to-rose-400/20",
+    coral:
+      "bg-gradient-to-br from-pink-400/25 via-rose-400/30 to-orange-400/20",
   };
-  
+
   return gradients[gradient || "cyan"];
 };
 
 // ============================================================================
-// SIZE VARIANTS (SAME AS SOFTCLUB)
+// SIZE VARIANTS (ENHANCED FOR GLASS)
 // ============================================================================
 
 const getSizeStyles = (size: StatCardProps["size"]) => {
   const sizes = {
     sm: {
-      padding: "sm",
-      valueText: "text-xl font-bold",
-      labelText: "text-xs",
+      container: "p-4 min-h-[120px]",
+      valueText: "text-xl md:text-2xl font-bold",
+      labelText: "text-xs text-white/70",
       iconSize: "w-5 h-5",
       trendText: "text-xs",
     },
     md: {
-      padding: "md",
-      valueText: "text-3xl font-bold",
-      labelText: "text-sm",
+      container: "p-6 min-h-[160px]",
+      valueText: "text-3xl md:text-4xl font-bold",
+      labelText: "text-sm text-white/70",
       iconSize: "w-6 h-6",
       trendText: "text-sm",
     },
     lg: {
-      padding: "lg",
-      valueText: "text-4xl font-bold",
-      labelText: "text-base",
+      container: "p-8 min-h-[200px]",
+      valueText: "text-4xl md:text-5xl font-bold",
+      labelText: "text-base text-white/70",
       iconSize: "w-8 h-8",
       trendText: "text-base",
     },
   };
-  
+
   return sizes[size || "md"];
 };
 
@@ -98,153 +104,86 @@ const GlassTrendIndicator: React.FC<{
   trend: StatCardProps["trend"];
   value?: number;
   label?: string;
-  textSize: string;
-  glassLevel: any;
-}> = ({ trend, value, label, textSize, glassLevel }) => {
-  if (trend === "none" || !trend) return null;
+  size: string;
+}> = ({ trend, value, label, size }) => {
+  if (!trend || trend === "none") return null;
 
-  const trendConfig = {
-    up: {
-      color: "text-emerald-100",
-      bgGradient: "from-emerald-400/40 to-teal-400/30",
-      borderColor: "border-emerald-300/50",
-      icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 17l5-5 5 5M7 7l5-5 5 5" />
-        </svg>
-      ),
-    },
-    down: {
-      color: "text-red-100",
-      bgGradient: "from-red-400/40 to-pink-400/30",
-      borderColor: "border-red-300/50",
-      icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 7l-5 5-5-5m10 10l-5-5-5 5" />
-        </svg>
-      ),
-    },
-    stable: {
-      color: "text-blue-100",
-      bgGradient: "from-blue-400/40 to-cyan-400/30",
-      borderColor: "border-blue-300/50",
-      icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-        </svg>
-      ),
-    },
+  const getTrendIcon = () => {
+    switch (trend) {
+      case "up":
+        return (
+          <motion.svg
+            className="w-4 h-4 text-emerald-400"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+            initial={{ rotate: 0, scale: 0.8 }}
+            animate={{ rotate: 360, scale: 1 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+          >
+            <path
+              fillRule="evenodd"
+              d="M5.293 7.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L6.707 7.707a1 1 0 01-1.414 0z"
+              clipRule="evenodd"
+            />
+          </motion.svg>
+        );
+      case "down":
+        return (
+          <motion.svg
+            className="w-4 h-4 text-red-400"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+            initial={{ rotate: 0, scale: 0.8 }}
+            animate={{ rotate: 360, scale: 1 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+          >
+            <path
+              fillRule="evenodd"
+              d="M14.707 12.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L9 14.586V3a1 1 0 012 0v11.586l2.293-2.293a1 1 0 011.414 0z"
+              clipRule="evenodd"
+            />
+          </motion.svg>
+        );
+      case "stable":
+        return (
+          <motion.div
+            className="w-4 h-1 bg-blue-400/70 rounded-full"
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            transition={{ duration: 0.4 }}
+          />
+        );
+      default:
+        return null;
+    }
   };
 
-  const config = trendConfig[trend];
+  const getTrendColor = () => {
+    switch (trend) {
+      case "up":
+        return "text-emerald-400";
+      case "down":
+        return "text-red-400";
+      case "stable":
+        return "text-blue-400";
+      default:
+        return "text-white/60";
+    }
+  };
 
   return (
     <motion.div
-      className={`
-        inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full
-        ${glassLevel.backdrop} bg-gradient-to-r ${config.bgGradient}
-        border ${config.borderColor} ${config.color} ${textSize} font-semibold
-        shadow-glass-sm
-      `}
+      className="flex items-center gap-2 backdrop-blur-sm bg-white/5 px-3 py-1.5 rounded-full border border-white/10"
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.4, delay: 0.3 }}
+      transition={{ duration: 0.5, delay: 0.3 }}
     >
-      {config.icon}
-      {value && (
-        <span>
-          {trend === "up" ? "+" : trend === "down" ? "-" : ""}{Math.abs(value)}%
-        </span>
-      )}
-      {label && <span className="ml-1">{label}</span>}
+      {getTrendIcon()}
+      <div className={`${size} ${getTrendColor()} font-medium`}>
+        {value && `${value > 0 ? "+" : ""}${value}%`}
+        {label && <span className="text-white/50 ml-1">{label}</span>}
+      </div>
     </motion.div>
-  );
-};
-
-// ============================================================================
-// GLASS ANIMATED VALUE COUNTER
-// ============================================================================
-
-const GlassAnimatedValue: React.FC<{
-  value: number | string;
-  animateValue: boolean;
-  prefix?: string;
-  suffix?: string;
-  textClass: string;
-  particleEffect?: boolean;
-}> = ({ value, animateValue, prefix, suffix, textClass, particleEffect }) => {
-  const [showParticles, setShowParticles] = useState(false);
-  const isNumeric = typeof value === "number";
-  
-  React.useEffect(() => {
-    if (particleEffect && animateValue) {
-      const timer = setTimeout(() => setShowParticles(true), 800);
-      return () => clearTimeout(timer);
-    }
-  }, [particleEffect, animateValue]);
-
-  if (!animateValue || !isNumeric) {
-    return (
-      <span className={textClass}>
-        {prefix}{value}{suffix}
-      </span>
-    );
-  }
-
-  return (
-    <div className="relative">
-      <motion.span
-        className={textClass}
-        initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
-        animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-        transition={{ duration: 0.8, ease: [0.25, 0.25, 0, 1] }}
-      >
-        <motion.span
-          initial={{ scale: 1 }}
-          animate={{ scale: [1, 1.15, 1] }}
-          transition={{ duration: 1, delay: 0.4 }}
-        >
-          {prefix}
-          <motion.span
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1.8, ease: "easeOut" }}
-          >
-            {typeof value === "number" ? value.toLocaleString() : value}
-          </motion.span>
-          {suffix}
-        </motion.span>
-      </motion.span>
-
-      {/* Glass Particle Effect */}
-      {particleEffect && showParticles && (
-        <div className="absolute inset-0 pointer-events-none">
-          {[...Array(6)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute w-1 h-1 bg-white/60 rounded-full"
-              initial={{
-                x: "50%",
-                y: "50%",
-                opacity: 0,
-                scale: 0,
-              }}
-              animate={{
-                x: `${50 + (Math.random() - 0.5) * 200}%`,
-                y: `${50 + (Math.random() - 0.5) * 200}%`,
-                opacity: [0, 1, 0],
-                scale: [0, 1, 0],
-              }}
-              transition={{
-                duration: 2,
-                delay: i * 0.1,
-                ease: "easeOut",
-              }}
-            />
-          ))}
-        </div>
-      )}
-    </div>
   );
 };
 
@@ -252,16 +191,306 @@ const GlassAnimatedValue: React.FC<{
 // GLASS LOADING SKELETON
 // ============================================================================
 
-const GlassStatCardSkeleton: React.FC<{ 
-  size: StatCardProps["size"]; 
-  glassLevel: any; 
-}> = ({ size, glassLevel }) => {
+const GlassLoadingSkeleton: React.FC<{ size: string }> = ({ size }) => {
   return (
-    <div className="animate-pulse">
-      <div className={`
-        ${glassLevel.backdrop} bg-white/20 border border-white/30 rounded-xl mb-3
-        ${size === "sm" ? "h-6 w-16" : size === "lg" ? "h-10 w-24" : "h-8 w-20"}
-      `} />
-      <div className={`
-        ${glassLevel.backdrop} bg-white/15 border border-white/25 rounded-lg
-        ${size === "sm" ? "h-4 w-20
+    <div className="animate-pulse space-y-4">
+      <motion.div
+        className="h-8 bg-white/10 rounded-lg backdrop-blur-sm"
+        animate={{ opacity: [0.3, 0.7, 0.3] }}
+        transition={{ duration: 2, repeat: Infinity }}
+      />
+      <motion.div
+        className="h-12 bg-white/15 rounded-lg backdrop-blur-sm"
+        animate={{ opacity: [0.3, 0.7, 0.3] }}
+        transition={{ duration: 2, repeat: Infinity, delay: 0.2 }}
+      />
+      <motion.div
+        className="h-4 bg-white/5 rounded-lg backdrop-blur-sm"
+        animate={{ opacity: [0.3, 0.7, 0.3] }}
+        transition={{ duration: 2, repeat: Infinity, delay: 0.4 }}
+      />
+    </div>
+  );
+};
+
+// ============================================================================
+// ANIMATED VALUE COMPONENT
+// ============================================================================
+
+const AnimatedValue: React.FC<{
+  value: number | string;
+  prefix?: string;
+  suffix?: string;
+  className?: string;
+  animate?: boolean;
+}> = ({ value, prefix, suffix, className, animate = true }) => {
+  const [displayValue, setDisplayValue] = useState(animate ? 0 : value);
+
+  useEffect(() => {
+    if (!animate || typeof value !== "number") {
+      setDisplayValue(value);
+      return;
+    }
+
+    const startValue = 0;
+    const endValue = value;
+    const duration = 1500; // 1.5 seconds
+    const steps = 60;
+    const stepValue = (endValue - startValue) / steps;
+    const stepDuration = duration / steps;
+
+    let currentStep = 0;
+
+    const timer = setInterval(() => {
+      currentStep++;
+      const newValue = Math.min(startValue + stepValue * currentStep, endValue);
+      setDisplayValue(Math.round(newValue));
+
+      if (currentStep >= steps) {
+        clearInterval(timer);
+        setDisplayValue(endValue);
+      }
+    }, stepDuration);
+
+    return () => clearInterval(timer);
+  }, [value, animate]);
+
+  return (
+    <motion.span
+      className={className}
+      initial={{ scale: 0.8, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+    >
+      {prefix}
+      {displayValue}
+      {suffix}
+    </motion.span>
+  );
+};
+
+// ============================================================================
+// GLASS PARTICLES EFFECT (OPTIONAL)
+// ============================================================================
+
+const GlassParticles: React.FC = () => {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {[...Array(6)].map((_, i) => (
+        <motion.div
+          key={i}
+          className="absolute w-1 h-1 bg-white/20 rounded-full"
+          style={{
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+          }}
+          animate={{
+            y: [0, -20, 0],
+            opacity: [0.2, 0.6, 0.2],
+            scale: [0.5, 1, 0.5],
+          }}
+          transition={{
+            duration: 3 + Math.random() * 2,
+            repeat: Infinity,
+            delay: Math.random() * 2,
+          }}
+        />
+      ))}
+    </div>
+  );
+};
+
+// ============================================================================
+// MAIN STATCARD GLASS HEAVY COMPONENT
+// ============================================================================
+
+const StatCardGlassHeavy: React.FC<StatCardProps> = ({
+  label,
+  value,
+  gradient = "cyan",
+  customGradient,
+  icon,
+  iconPosition = "left",
+  trend = "none",
+  trendValue,
+  trendLabel,
+  isLoading = false,
+  animateValue = true,
+  suffix = "",
+  prefix = "",
+  size = "md",
+  variant = "default",
+  className = "",
+  onClick,
+  glassIntensity = "medium",
+  shimmer = true,
+  condensation = true,
+  particleEffect = false,
+  ...props
+}) => {
+  const theme = useTheme();
+  const [isHovered, setIsHovered] = useState(false);
+  const sizeStyles = getSizeStyles(size);
+
+  // Glass intensity mapping
+  const glassIntensityMap = {
+    whisper: "backdrop-blur-[6px] bg-white/15",
+    light: "backdrop-blur-[12px] bg-white/20",
+    medium: "backdrop-blur-[20px] bg-white/25",
+    heavy: "backdrop-blur-[32px] bg-white/30",
+    extreme: "backdrop-blur-[48px] bg-white/35",
+  };
+
+  const gradientStyles = getGlassGradientStyles(gradient, customGradient);
+  const glassStyles = glassIntensityMap[glassIntensity];
+
+  // Animation variants
+  const cardVariants = {
+    initial: {
+      opacity: 0,
+      scale: 0.9,
+      y: 40,
+      filter: "blur(20px)",
+    },
+    animate: {
+      opacity: 1,
+      scale: 1,
+      y: 0,
+      filter: "blur(0px)",
+    },
+    hover: {
+      scale: 1.02,
+      y: -8,
+      transition: { duration: 0.3, ease: "easeOut" },
+    },
+    exit: {
+      opacity: 0,
+      scale: 0.95,
+      transition: { duration: 0.2 },
+    },
+  };
+
+  if (isLoading) {
+    return (
+      <motion.div
+        className={`
+          relative overflow-hidden rounded-2xl border border-white/20
+          ${glassStyles} ${gradientStyles} ${sizeStyles.container}
+          shadow-lg shadow-black/10 ${className}
+        `}
+        variants={cardVariants}
+        initial="initial"
+        animate="animate"
+        exit="exit"
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+      >
+        {shimmer && <GlassShimmer />}
+        <GlassLoadingSkeleton size={sizeStyles.trendText} />
+      </motion.div>
+    );
+  }
+
+  return (
+    <motion.div
+      className={`
+        relative overflow-hidden rounded-2xl border border-white/30 cursor-pointer
+        ${glassStyles} ${gradientStyles} ${sizeStyles.container}
+        shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/30
+        transition-all duration-300 ${className}
+      `}
+      variants={cardVariants}
+      initial="initial"
+      animate="animate"
+      whileHover="hover"
+      exit="exit"
+      transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+      onHoverStart={() => setIsHovered(true)}
+      onHoverEnd={() => setIsHovered(false)}
+      onClick={onClick}
+      {...props}
+    >
+      {/* Glass Effects Layer */}
+      {shimmer && <GlassShimmer intensity={glassIntensity} />}
+      {condensation && <Condensation density={isHovered ? "high" : "medium"} />}
+      <Refraction intensity={isHovered ? "high" : "low"} />
+
+      {/* Particle Effects (Optional) */}
+      {particleEffect && <GlassParticles />}
+
+      {/* Content Layer */}
+      <div className="relative z-10 h-full flex flex-col justify-between">
+        {/* Header Section */}
+        <div
+          className={`flex items-center ${iconPosition === "top" ? "flex-col" : "flex-row"} gap-3 mb-4`}
+        >
+          {icon && (
+            <motion.div
+              className={`
+                ${sizeStyles.iconSize} text-white/80 flex-shrink-0
+                ${iconPosition === "top" ? "mb-2" : ""}
+              `}
+              initial={{ rotate: -10, opacity: 0 }}
+              animate={{ rotate: 0, opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              {icon}
+            </motion.div>
+          )}
+
+          <motion.h3
+            className={`${sizeStyles.labelText} font-medium tracking-wide uppercase ${iconPosition === "top" ? "text-center" : ""}`}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+          >
+            {label}
+          </motion.h3>
+        </div>
+
+        {/* Value Section */}
+        <div className="flex-1 flex items-center justify-center">
+          <AnimatedValue
+            value={value}
+            prefix={prefix}
+            suffix={suffix}
+            animate={animateValue}
+            className={`${sizeStyles.valueText} text-white font-bold tracking-tight text-center`}
+          />
+        </div>
+
+        {/* Trend Section */}
+        {trend !== "none" && (
+          <div className="mt-auto pt-4 flex justify-center">
+            <GlassTrendIndicator
+              trend={trend}
+              value={trendValue}
+              label={trendLabel}
+              size={sizeStyles.trendText}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Enhanced Glass Reflection */}
+      <motion.div
+        className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent pointer-events-none"
+        animate={{
+          opacity: isHovered ? 0.3 : 0.1,
+        }}
+        transition={{ duration: 0.3 }}
+      />
+
+      {/* Corner Highlight */}
+      <motion.div
+        className="absolute top-0 right-0 w-16 h-16 bg-white/5 rounded-bl-full"
+        animate={{
+          opacity: isHovered ? 1 : 0.6,
+          scale: isHovered ? 1.1 : 1,
+        }}
+        transition={{ duration: 0.3 }}
+      />
+    </motion.div>
+  );
+};
+
+export default StatCardGlassHeavy;

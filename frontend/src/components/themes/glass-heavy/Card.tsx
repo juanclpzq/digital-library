@@ -9,7 +9,7 @@ import { useTheme } from "@/theme/ThemeProvider";
 import GlassLayers from "./effects/GlassLayers";
 import GlassShimmer from "./effects/GlassShimmer";
 import Condensation from "./effects/Condensation";
-import Refraction from "./effects/Refrations";
+import Refraction from "./effects/Refraction";
 
 // ============================================================================
 // CARD PROPS INTERFACE (SAME AS SOFTCLUB + GLASS EXTRAS)

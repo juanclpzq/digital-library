@@ -3,9 +3,9 @@
 // FILE LOCATION: src/components/themes/softclub/Button.tsx
 // ============================================================================
 
-import React from "react";
-import { motion } from "framer-motion";
-import { softclubColors, getGlowEffect } from "@/theme/softclub";
+import React, { useState, forwardRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useTheme } from "@/theme/ThemeProvider";
 
 // ============================================================================
 // BUTTON PROPS INTERFACE
@@ -20,349 +20,330 @@ export interface ButtonProps
     | "danger"
     | "success"
     | "outline";
-  size?: "sm" | "md" | "lg" | "xl";
-  loading?: boolean;
+  size?: "xs" | "sm" | "md" | "lg" | "xl";
+  gradient?: "mint" | "cyan" | "peach" | "lavender" | "coral" | "custom";
+  customGradient?: string;
+  isLoading?: boolean;
+  loadingText?: string;
   icon?: React.ReactNode;
   iconPosition?: "left" | "right";
   fullWidth?: boolean;
-  rounded?: "none" | "sm" | "md" | "lg" | "full";
-  glow?: boolean;
+  rounded?: "sm" | "md" | "lg" | "xl" | "full";
+  shadow?: "none" | "soft" | "gentle" | "strong";
+  animate?: boolean;
   children: React.ReactNode;
 }
 
 // ============================================================================
-// SOFTCLUB BUTTON VARIANTS
+// SOFTCLUB BUTTON STYLES
 // ============================================================================
 
-const getSoftclubVariantStyles = (variant: ButtonProps["variant"]) => {
+const getVariantStyles = (
+  variant: ButtonProps["variant"],
+  gradient: ButtonProps["gradient"],
+  customGradient?: string
+) => {
+  const gradients = {
+    mint: "bg-gradient-to-r from-mint-dream to-emerald-300",
+    cyan: "bg-gradient-to-r from-soft-cyan to-blue-300",
+    peach: "bg-gradient-to-r from-peachy-keen to-orange-300",
+    lavender: "bg-gradient-to-r from-lavender-mist to-purple-300",
+    coral: "bg-gradient-to-r from-sunset-coral to-pink-300",
+    custom: customGradient || "bg-gradient-to-r from-soft-cyan to-mint-dream",
+  };
+
+  const baseGradient = gradients[gradient || "cyan"];
+
   const variants = {
-    primary: `
-      bg-gradient-to-r from-mint-dream/80 to-soft-cyan/80
-      text-midnight-navy font-bold
-      shadow-gentle hover:shadow-mint-glow
-      hover:from-mint-dream/90 hover:to-soft-cyan/90
-      active:from-mint-dream/70 active:to-soft-cyan/70
-    `,
+    primary: `${baseGradient} text-white font-semibold hover:opacity-90 active:scale-95`,
 
-    secondary: `
-      bg-gradient-to-r from-peachy-keen/70 to-sunset-coral/70
-      text-cloud-white font-semibold
-      shadow-gentle hover:shadow-peach-glow
-      hover:from-peachy-keen/80 hover:to-sunset-coral/80
-      active:from-peachy-keen/60 active:to-sunset-coral/60
-    `,
+    secondary: `bg-gradient-to-r from-cloud-white/80 to-silver-matte/60 text-midnight-navy font-medium border border-white/40 hover:border-white/60 hover:from-cloud-white/90 hover:to-silver-matte/70`,
 
-    ghost: `
-      bg-cloud-white/40 hover:bg-cloud-white/60
-      text-midnight-navy/80 hover:text-midnight-navy
-      border border-silver-matte/30 hover:border-soft-cyan/40
-      shadow-none hover:shadow-gentle
-    `,
+    ghost: `bg-transparent text-midnight-navy font-medium hover:bg-gradient-to-r hover:from-white/20 hover:to-white/10 border border-transparent hover:border-white/30`,
 
-    danger: `
-      bg-gradient-to-r from-sunset-coral/80 to-peachy-keen/80
-      text-cloud-white font-semibold
-      shadow-gentle hover:shadow-coral-glow
-      hover:from-sunset-coral/90 hover:to-peachy-keen/90
-      active:from-sunset-coral/70 active:to-peachy-keen/70
-    `,
+    danger: `bg-gradient-to-r from-red-400 to-red-500 text-white font-semibold hover:from-red-500 hover:to-red-600 active:scale-95`,
 
-    success: `
-      bg-gradient-to-r from-mint-dream/85 to-aqua-mist/85
-      text-midnight-navy/90 font-semibold
-      shadow-gentle hover:shadow-mint-glow
-      hover:from-mint-dream/95 hover:to-aqua-mist/95
-      active:from-mint-dream/75 active:to-aqua-mist/75
-    `,
+    success: `${gradients.mint} text-white font-semibold hover:opacity-90 active:scale-95`,
 
-    outline: `
-      bg-transparent border-2 border-soft-cyan/60
-      text-soft-cyan hover:text-midnight-navy
-      hover:bg-soft-cyan/20 hover:border-soft-cyan/80
-      shadow-none hover:shadow-cyan-glow
-    `,
+    outline: `bg-transparent border-2 text-midnight-navy font-medium hover:bg-gradient-to-r hover:from-white/10 hover:to-white/5 border-midnight-navy/30 hover:border-midnight-navy/50`,
   };
 
   return variants[variant || "primary"];
 };
 
-// ============================================================================
-// SIZE VARIANTS
-// ============================================================================
-
 const getSizeStyles = (size: ButtonProps["size"]) => {
   const sizes = {
-    sm: "px-4 py-2 text-sm",
-    md: "px-6 py-3 text-base",
-    lg: "px-8 py-4 text-lg",
-    xl: "px-10 py-5 text-xl",
+    xs: "px-3 py-1.5 text-xs min-h-[28px]",
+    sm: "px-4 py-2 text-sm min-h-[36px]",
+    md: "px-6 py-3 text-base min-h-[44px]",
+    lg: "px-8 py-4 text-lg min-h-[52px]",
+    xl: "px-10 py-5 text-xl min-h-[60px]",
   };
 
   return sizes[size || "md"];
 };
 
-// ============================================================================
-// ROUNDED VARIANTS
-// ============================================================================
-
 const getRoundedStyles = (rounded: ButtonProps["rounded"]) => {
-  const roundedStyles = {
-    none: "rounded-none",
-    sm: "rounded-sm",
-    md: "rounded-gentle",
-    lg: "rounded-xl",
+  const styles = {
+    sm: "rounded-lg",
+    md: "rounded-xl",
+    lg: "rounded-2xl",
+    xl: "rounded-3xl",
     full: "rounded-full",
   };
 
-  return roundedStyles[rounded || "md"];
+  return styles[rounded || "lg"];
+};
+
+const getShadowStyles = (shadow: ButtonProps["shadow"]) => {
+  const shadows = {
+    none: "",
+    soft: "shadow-soft",
+    gentle: "shadow-gentle",
+    strong: "shadow-lg shadow-midnight-navy/20",
+  };
+
+  return shadows[shadow || "gentle"];
 };
 
 // ============================================================================
-// MAIN COMPONENT
+// LOADING SPINNER COMPONENT
 // ============================================================================
 
-const ButtonSoftclub: React.FC<ButtonProps> = ({
-  variant = "primary",
-  size = "md",
-  loading = false,
-  icon,
-  iconPosition = "left",
-  fullWidth = false,
-  rounded = "md",
-  glow = false,
-  disabled,
-  className = "",
-  children,
-  onClick,
-  ...props
-}) => {
-  // ============================================================================
-  // DYNAMIC STYLES
-  // ============================================================================
+const LoadingSpinner: React.FC<{ size: ButtonProps["size"] }> = ({ size }) => {
+  const spinnerSizes = {
+    xs: "w-3 h-3",
+    sm: "w-4 h-4",
+    md: "w-5 h-5",
+    lg: "w-6 h-6",
+    xl: "w-7 h-7",
+  };
 
-  const variantStyles = getSoftclubVariantStyles(variant);
-  const sizeStyles = getSizeStyles(size);
-  const roundedStyles = getRoundedStyles(rounded);
-  const glowStyles = glow ? getGlowEffect("softCyan") : "";
-
-  const baseStyles = `
-    inline-flex items-center justify-center gap-2
-    font-medium transition-all duration-300 ease-soft
-    transform hover:scale-105 active:scale-95
-    focus:outline-none focus:ring-2 focus:ring-soft-cyan/30
-    disabled:opacity-50 disabled:cursor-not-allowed 
-    disabled:hover:scale-100 disabled:hover:shadow-none
-    ${fullWidth ? "w-full" : ""}
-    ${variantStyles}
-    ${sizeStyles}
-    ${roundedStyles}
-    ${glowStyles}
-    ${className}
-  `;
-
-  // ============================================================================
-  // LOADING SPINNER COMPONENT
-  // ============================================================================
-
-  const LoadingSpinner = () => (
+  return (
     <motion.div
-      className="w-4 h-4 border-2 border-current border-t-transparent rounded-full"
+      className={`${spinnerSizes[size || "md"]} border-2 border-current border-t-transparent rounded-full`}
       animate={{ rotate: 360 }}
       transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
     />
   );
+};
 
-  // ============================================================================
-  // EVENT HANDLERS
-  // ============================================================================
+// ============================================================================
+// MAIN BUTTON COMPONENT
+// ============================================================================
 
-  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (loading || disabled) return;
-    onClick?.(e);
-  };
+const ButtonSoftclub = forwardRef<HTMLButtonElement, ButtonProps>(
+  (
+    {
+      variant = "primary",
+      size = "md",
+      gradient = "cyan",
+      customGradient,
+      isLoading = false,
+      loadingText,
+      icon,
+      iconPosition = "left",
+      fullWidth = false,
+      rounded = "lg",
+      shadow = "gentle",
+      animate = true,
+      className = "",
+      disabled,
+      children,
+      onClick,
+      ...props
+    },
+    ref
+  ) => {
+    const theme = useTheme();
+    const [isPressed, setIsPressed] = useState(false);
 
-  // ============================================================================
-  // RENDER CONTENT
-  // ============================================================================
+    const variantStyles = getVariantStyles(variant, gradient, customGradient);
+    const sizeStyles = getSizeStyles(size);
+    const roundedStyles = getRoundedStyles(rounded);
+    const shadowStyles = getShadowStyles(shadow);
 
-  const renderContent = () => {
-    if (loading) {
-      return (
-        <>
-          <LoadingSpinner />
-          <span className="opacity-75">Loading...</span>
-        </>
-      );
-    }
+    const buttonClasses = [
+      // Base styles
+      "relative inline-flex items-center justify-center font-medium",
+      "transition-all duration-300 ease-soft",
+      "focus:outline-none focus:ring-2 focus:ring-soft-cyan/50 focus:ring-offset-2",
+      "disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none",
 
-    const iconElement = icon && (
-      <span
-        className={`flex items-center ${
-          size === "sm" ? "text-sm" : size === "lg" ? "text-lg" : "text-base"
-        }`}
-      >
-        {icon}
-      </span>
-    );
+      // Dynamic styles
+      variantStyles,
+      sizeStyles,
+      roundedStyles,
+      shadowStyles,
 
-    if (iconPosition === "right") {
-      return (
-        <>
-          <span>{children}</span>
-          {iconElement}
-        </>
-      );
-    }
+      // Conditional styles
+      fullWidth ? "w-full" : "",
+      isLoading ? "cursor-wait" : "",
 
-    return (
+      // Custom classes
+      className,
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+    // Animation variants
+    const buttonVariants = {
+      initial: { scale: 1, y: 0 },
+      hover: animate
+        ? {
+            scale: 1.02,
+            y: -2,
+            transition: { duration: 0.2, ease: "easeOut" },
+          }
+        : {},
+      tap: animate
+        ? {
+            scale: 0.98,
+            transition: { duration: 0.1 },
+          }
+        : {},
+      disabled: { scale: 1, y: 0 },
+    };
+
+    const iconVariants = {
+      initial: { x: 0, rotate: 0 },
+      hover: animate
+        ? {
+            x: iconPosition === "right" ? 2 : -2,
+            transition: { duration: 0.2 },
+          }
+        : {},
+    };
+
+    const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (isLoading || disabled) return;
+
+      setIsPressed(true);
+      setTimeout(() => setIsPressed(false), 100);
+
+      onClick?.(e);
+    };
+
+    const content = (
       <>
-        {iconElement}
-        <span>{children}</span>
+        {/* Icon - Left Position */}
+        {icon && iconPosition === "left" && !isLoading && (
+          <motion.span
+            className={`${sizeStyles.includes("text-xs") ? "mr-2" : sizeStyles.includes("text-sm") ? "mr-2.5" : "mr-3"}`}
+            variants={iconVariants}
+            initial="initial"
+            whileHover="hover"
+          >
+            {icon}
+          </motion.span>
+        )}
+
+        {/* Loading Spinner */}
+        {isLoading && (
+          <motion.span
+            className={`${iconPosition === "left" ? "mr-3" : iconPosition === "right" ? "ml-3" : "mr-2"}`}
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.2 }}
+          >
+            <LoadingSpinner size={size} />
+          </motion.span>
+        )}
+
+        {/* Button Text */}
+        <motion.span
+          className="relative z-10"
+          initial={{ opacity: 1 }}
+          animate={{ opacity: isLoading ? 0.7 : 1 }}
+          transition={{ duration: 0.2 }}
+        >
+          {isLoading && loadingText ? loadingText : children}
+        </motion.span>
+
+        {/* Icon - Right Position */}
+        {icon && iconPosition === "right" && !isLoading && (
+          <motion.span
+            className={`${sizeStyles.includes("text-xs") ? "ml-2" : sizeStyles.includes("text-sm") ? "ml-2.5" : "ml-3"}`}
+            variants={iconVariants}
+            initial="initial"
+            whileHover="hover"
+          >
+            {icon}
+          </motion.span>
+        )}
       </>
     );
-  };
 
-  // ============================================================================
-  // RENDER COMPONENT
-  // ============================================================================
+    return (
+      <motion.button
+        ref={ref}
+        className={buttonClasses}
+        variants={buttonVariants}
+        initial="initial"
+        whileHover={!disabled && !isLoading ? "hover" : "disabled"}
+        whileTap={!disabled && !isLoading ? "tap" : "disabled"}
+        onClick={handleClick}
+        disabled={disabled || isLoading}
+        {...props}
+      >
+        {/* Gentle glow effect on hover */}
+        <motion.div
+          className="absolute inset-0 bg-gradient-to-r from-white/20 to-white/10 rounded-inherit opacity-0"
+          animate={{
+            opacity: isPressed ? 0.3 : 0,
+          }}
+          transition={{ duration: 0.2 }}
+        />
 
-  return (
-    <motion.button
-      className={baseStyles}
-      onClick={handleClick}
-      disabled={loading || disabled}
-      whileHover={{ scale: disabled ? 1 : 1.05 }}
-      whileTap={{ scale: disabled ? 1 : 0.95 }}
-      transition={{ duration: 0.2, ease: "easeInOut" }}
-      {...props}
-    >
-      {renderContent()}
+        {/* Press effect */}
+        <AnimatePresence>
+          {isPressed && (
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-r from-white/30 to-white/20 rounded-inherit"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.2 }}
+              transition={{ duration: 0.2 }}
+            />
+          )}
+        </AnimatePresence>
 
-      {/* Gentle Shine Effect */}
-      <div className="absolute inset-0 rounded-[inherit] opacity-0 hover:opacity-100 transition-opacity duration-500 pointer-events-none">
-        <div className="absolute inset-0 rounded-[inherit] bg-gradient-to-r from-transparent via-cloud-white/20 to-transparent transform -skew-x-12 -translate-x-full animate-shimmer" />
-      </div>
-    </motion.button>
-  );
-};
+        {/* Content */}
+        <div className="relative z-10 flex items-center justify-center">
+          {content}
+        </div>
 
-// ============================================================================
-// BUTTON GROUP COMPONENT (BONUS)
-// ============================================================================
+        {/* Floating particles effect (subtle) */}
+        {variant === "primary" && !disabled && (
+          <div className="absolute inset-0 overflow-hidden rounded-inherit pointer-events-none">
+            {[...Array(3)].map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute w-1 h-1 bg-white/30 rounded-full"
+                style={{
+                  left: `${20 + Math.random() * 60}%`,
+                  top: `${30 + Math.random() * 40}%`,
+                }}
+                animate={{
+                  y: [0, -8, 0],
+                  opacity: [0.3, 0.7, 0.3],
+                  scale: [0.8, 1.2, 0.8],
+                }}
+                transition={{
+                  duration: 3 + Math.random() * 2,
+                  repeat: Infinity,
+                  delay: Math.random() * 2,
+                  ease: "easeInOut",
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </motion.button>
+    );
+  }
+);
 
-interface ButtonGroupProps {
-  children: React.ReactNode;
-  variant?: ButtonProps["variant"];
-  size?: ButtonProps["size"];
-  className?: string;
-}
-
-export const ButtonGroupSoftclub: React.FC<ButtonGroupProps> = ({
-  children,
-  variant = "primary",
-  size = "md",
-  className = "",
-}) => {
-  return (
-    <div
-      className={`
-      inline-flex bg-cloud-white/20 p-1 rounded-xl shadow-inset-soft
-      ${className}
-    `}
-    >
-      {React.Children.map(children, (child, index) => {
-        if (React.isValidElement<ButtonProps>(child)) {
-          return React.cloneElement(child, {
-            variant: child.props.variant || variant,
-            size: child.props.size || size,
-            rounded: "md",
-            className: `${child.props.className || ""} ${
-              index === 0
-                ? "rounded-l-lg rounded-r-none"
-                : index === React.Children.count(children) - 1
-                  ? "rounded-r-lg rounded-l-none"
-                  : "rounded-none"
-            }`,
-          });
-        }
-        return child;
-      })}
-    </div>
-  );
-};
-
-// ============================================================================
-// ICON BUTTON VARIANT
-// ============================================================================
-
-interface IconButtonProps extends Omit<ButtonProps, "children"> {
-  icon: React.ReactNode;
-  "aria-label": string;
-}
-
-export const IconButtonSoftclub: React.FC<IconButtonProps> = ({
-  icon,
-  size = "md",
-  className = "",
-  ...props
-}) => {
-  const iconSizes = {
-    sm: "w-8 h-8 text-sm",
-    md: "w-10 h-10 text-base",
-    lg: "w-12 h-12 text-lg",
-    xl: "w-14 h-14 text-xl",
-  };
-
-  return (
-    <ButtonSoftclub
-      size={size}
-      rounded="full"
-      className={`${iconSizes[size]} p-0 ${className}`}
-      {...props}
-    >
-      {icon}
-    </ButtonSoftclub>
-  );
-};
-
-// ============================================================================
-// FLOATING ACTION BUTTON
-// ============================================================================
-
-interface FABProps extends Omit<ButtonProps, "variant" | "size"> {
-  position?: "bottom-right" | "bottom-left" | "top-right" | "top-left";
-  icon: React.ReactNode;
-}
-
-export const FloatingActionButtonSoftclub: React.FC<FABProps> = ({
-  position = "bottom-right",
-  icon,
-  className = "",
-  ...props
-}) => {
-  const positions = {
-    "bottom-right": "fixed bottom-6 right-6",
-    "bottom-left": "fixed bottom-6 left-6",
-    "top-right": "fixed top-6 right-6",
-    "top-left": "fixed top-6 left-6",
-  };
-
-  return (
-    <ButtonSoftclub
-      variant="primary"
-      size="lg"
-      rounded="full"
-      glow
-      className={`
-        ${positions[position]} z-50 shadow-2xl shadow-mint-dream/30
-        w-14 h-14 p-0 hover:shadow-3xl hover:shadow-mint-dream/40
-        ${className}
-      `}
-      {...props}
-    >
-      {icon}
-    </ButtonSoftclub>
-  );
-};
+ButtonSoftclub.displayName = "ButtonSoftclub";
 
 export default ButtonSoftclub;

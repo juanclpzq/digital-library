@@ -5,409 +5,235 @@
 
 import { useMemo } from "react";
 import { useTheme } from "@/theme/ThemeProvider";
-import {
-  getAdaptiveCategoryStyle,
-  getAdaptiveStatusStyle,
-  getAdaptiveTextColors,
-  createAdaptiveButton,
-  createAdaptiveContainer,
-  glassLevels,
-} from "@/theme";
-import type { BookCategory, ReadingStatus } from "@/types";
 
 // ============================================================================
 // ADAPTIVE STYLES INTERFACE
 // ============================================================================
 
 export interface AdaptiveStyles {
-  // Container Styles
-  container: {
-    page: string;
-    main: string;
-    sidebar: string;
-    modal: string;
-    card: string;
-    floatingCard: string;
-  };
+  // Container styles
+  container: string;
+  card: string;
+  panel: string;
+  modal: string;
 
-  // Button Styles
-  button: {
-    primary: string;
-    secondary: string;
-    ghost: string;
-    danger: string;
-    success: string;
-  };
+  // Interactive elements
+  button: string;
+  buttonPrimary: string;
+  buttonSecondary: string;
+  input: string;
 
-  // Input Styles
-  input: {
-    base: string;
-    focused: string;
-    error: string;
-    success: string;
-    search: string;
-  };
+  // Text styles
+  heading: string;
+  subheading: string;
+  body: string;
+  caption: string;
 
-  // Text Styles
-  text: {
-    primary: string;
-    secondary: string;
-    tertiary: string;
-    inverted: string;
-    muted: string;
-    accent: string;
-  };
+  // Status indicators
+  success: string;
+  warning: string;
+  error: string;
+  info: string;
 
-  // Background Styles
-  background: {
-    page: string;
-    card: string;
-    overlay: string;
-    gradient: string;
-    pattern: string;
-  };
+  // Layout
+  header: string;
+  sidebar: string;
+  footer: string;
 
-  // Border & Effects
-  border: {
-    base: string;
-    focused: string;
-    muted: string;
-  };
-
-  // Status-specific styles
-  status: Record<ReadingStatus, string>;
-
-  // Category-specific styles
-  category: (category: BookCategory) => string;
-
-  // Animation classes
-  animation: {
-    cardEnter: string;
-    cardHover: string;
-    buttonHover: string;
-    fadeIn: string;
-    slideIn: string;
-  };
+  // Utility classes
+  glassTint: string;
+  textColor: string;
+  borderColor: string;
+  shadowClass: string;
 }
 
 // ============================================================================
-// MAIN HOOK IMPLEMENTATION
+// SOFTCLUB STYLES
+// ============================================================================
+
+const getSoftclubStyles = (): AdaptiveStyles => ({
+  // Containers
+  container:
+    "bg-gradient-to-br from-cloud-white via-silver-matte to-lavender-mist/20",
+  card: "bg-gradient-to-br from-white/90 via-cloud-white to-silver-matte/80 backdrop-blur-sm border border-white/60 rounded-3xl shadow-soft",
+  panel:
+    "bg-gradient-to-br from-cloud-white/95 to-silver-matte/85 border border-white/50 rounded-2xl shadow-gentle",
+  modal:
+    "bg-gradient-to-br from-white/95 via-cloud-white to-lavender-mist/30 border border-white/70 rounded-3xl shadow-soft backdrop-blur-md",
+
+  // Interactive
+  button:
+    "bg-gradient-to-r from-soft-cyan to-mint-dream hover:from-soft-cyan/90 hover:to-mint-dream/90 text-midnight-navy font-semibold px-6 py-3 rounded-2xl shadow-gentle hover:shadow-soft transition-all duration-300 hover:scale-105",
+  buttonPrimary:
+    "bg-gradient-to-r from-lavender-mist to-peachy-keen hover:from-lavender-mist/90 hover:to-peachy-keen/90 text-white font-bold px-8 py-4 rounded-2xl shadow-soft hover:shadow-gentle transition-all duration-300 hover:scale-105",
+  buttonSecondary:
+    "bg-gradient-to-r from-mint-dream/60 to-soft-cyan/60 hover:from-mint-dream/80 hover:to-soft-cyan/80 text-midnight-navy font-medium px-6 py-3 rounded-2xl border border-white/40 hover:border-white/60 transition-all duration-300",
+  input:
+    "bg-white/80 border border-soft-cyan/30 rounded-2xl px-4 py-3 text-midnight-navy placeholder-midnight-navy/50 focus:border-lavender-mist focus:ring-2 focus:ring-lavender-mist/20 focus:outline-none backdrop-blur-sm",
+
+  // Text
+  heading: "text-midnight-navy font-bold tracking-tight",
+  subheading: "text-midnight-navy/80 font-semibold tracking-wide",
+  body: "text-midnight-navy/70 font-medium",
+  caption: "text-midnight-navy/60 text-sm font-medium uppercase tracking-wider",
+
+  // Status
+  success:
+    "bg-gradient-to-r from-mint-dream to-emerald-300 text-midnight-navy border border-emerald-200",
+  warning:
+    "bg-gradient-to-r from-peachy-keen to-orange-300 text-midnight-navy border border-orange-200",
+  error:
+    "bg-gradient-to-r from-sunset-coral to-red-300 text-white border border-red-200",
+  info: "bg-gradient-to-r from-soft-cyan to-blue-300 text-midnight-navy border border-blue-200",
+
+  // Layout
+  header:
+    "bg-gradient-to-r from-cloud-white/95 via-soft-cyan/20 to-lavender-mist/30 backdrop-blur-md border-b border-white/40",
+  sidebar:
+    "bg-gradient-to-b from-cloud-white/90 to-silver-matte/80 border-r border-white/50 backdrop-blur-sm",
+  footer:
+    "bg-gradient-to-r from-silver-matte/80 via-cloud-white/70 to-lavender-mist/20 border-t border-white/40",
+
+  // Utilities
+  glassTint: "bg-white/20 backdrop-blur-sm",
+  textColor: "text-midnight-navy",
+  borderColor: "border-white/40",
+  shadowClass: "shadow-soft",
+});
+
+// ============================================================================
+// GLASS HEAVY STYLES
+// ============================================================================
+
+const getGlassHeavyStyles = (intensity: string): AdaptiveStyles => {
+  const intensityMap = {
+    whisper: { blur: "backdrop-blur-[6px]", opacity: "bg-white/10" },
+    light: { blur: "backdrop-blur-[12px]", opacity: "bg-white/15" },
+    medium: { blur: "backdrop-blur-[20px]", opacity: "bg-white/20" },
+    heavy: { blur: "backdrop-blur-[32px]", opacity: "bg-white/25" },
+    extreme: { blur: "backdrop-blur-[48px]", opacity: "bg-white/30" },
+  };
+
+  const glass =
+    intensityMap[intensity as keyof typeof intensityMap] || intensityMap.medium;
+  const glassBase = `${glass.blur} ${glass.opacity}`;
+
+  return {
+    // Containers
+    container: `${glassBase} border border-white/20 rounded-3xl`,
+    card: `${glass.blur} bg-white/18 border border-white/30 rounded-2xl shadow-glass-xl`,
+    panel: `${glass.blur} bg-white/15 border border-white/25 rounded-2xl shadow-glass-lg`,
+    modal: `${glass.blur} bg-white/25 border border-white/35 rounded-3xl shadow-glass-xl`,
+
+    // Interactive
+    button: `${glass.blur} bg-white/20 hover:bg-white/30 text-white font-semibold px-6 py-3 rounded-xl border border-white/25 hover:border-white/40 transition-all duration-300 hover:scale-105 shadow-glass-lg`,
+    buttonPrimary: `${glass.blur} bg-gradient-to-r from-cyan-400/30 to-blue-400/30 hover:from-cyan-400/40 hover:to-blue-400/40 text-white font-bold px-8 py-4 rounded-xl border border-white/30 hover:border-white/50 transition-all duration-300 hover:scale-105 shadow-glass-xl`,
+    buttonSecondary: `${glass.blur} bg-white/15 hover:bg-white/25 text-white/90 font-medium px-6 py-3 rounded-xl border border-white/20 hover:border-white/35 transition-all duration-300`,
+    input: `${glass.blur} bg-white/15 border border-white/25 rounded-xl px-4 py-3 text-white placeholder-white/50 focus:border-white/50 focus:ring-2 focus:ring-white/20 focus:outline-none`,
+
+    // Text
+    heading: "text-white font-bold tracking-tight",
+    subheading: "text-white/90 font-semibold tracking-wide",
+    body: "text-white/80 font-medium",
+    caption: "text-white/70 text-sm font-medium uppercase tracking-wider",
+
+    // Status
+    success: `${glass.blur} bg-gradient-to-r from-emerald-400/25 to-green-400/25 text-white border border-emerald-400/30`,
+    warning: `${glass.blur} bg-gradient-to-r from-amber-400/25 to-orange-400/25 text-white border border-amber-400/30`,
+    error: `${glass.blur} bg-gradient-to-r from-red-400/25 to-pink-400/25 text-white border border-red-400/30`,
+    info: `${glass.blur} bg-gradient-to-r from-cyan-400/25 to-blue-400/25 text-white border border-cyan-400/30`,
+
+    // Layout
+    header: `${glass.blur} bg-white/20 border-b border-white/25 shadow-glass-lg`,
+    sidebar: `${glass.blur} bg-white/18 border-r border-white/25 shadow-glass-lg`,
+    footer: `${glass.blur} bg-white/15 border-t border-white/20`,
+
+    // Utilities
+    glassTint: glassBase,
+    textColor: "text-white",
+    borderColor: "border-white/25",
+    shadowClass: "shadow-glass-lg",
+  };
+};
+
+// ============================================================================
+// MAIN HOOK
 // ============================================================================
 
 export const useAdaptiveStyles = (): AdaptiveStyles => {
   const theme = useTheme();
 
   const styles = useMemo(() => {
-    const isGlass = theme.isGlassMode;
-    const glassLevel =
-      theme.glassHeavy?.levels[theme.glassIntensity] || glassLevels.medium;
-    const textColors = getAdaptiveTextColors(theme.variant);
-
-    // ========================================================================
-    // GLASS HEAVY STYLES
-    // ========================================================================
-
-    if (isGlass) {
-      return {
-        // Container Styles - Glass Mode
-        container: {
-          page: `min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 ${glassLevel.backdrop}`,
-          main: `${glassLevel.backdrop} ${glassLevel.border} bg-white/15 rounded-3xl`,
-          sidebar: `${glassLevel.backdrop} ${glassLevel.border} bg-white/20 rounded-2xl`,
-          modal: `${glassLevel.backdrop} ${glassLevel.border} bg-white/25 rounded-3xl shadow-glass-xl`,
-          card: `${glassLevel.backdrop} ${glassLevel.border} bg-white/15 rounded-2xl shadow-glass-md`,
-          floatingCard: `${theme.glassHeavy.levels.extreme.backdrop} bg-white/25 border border-white/40 rounded-3xl shadow-glass-xl`,
-        },
-
-        // Button Styles - Glass Mode
-        button: {
-          primary: `${glassLevel.backdrop} bg-gradient-to-r from-blue-400/30 to-purple-400/30 border border-blue-300/50 text-white hover:from-blue-400/40 hover:to-purple-400/40 transition-all duration-300 shadow-lg shadow-blue-500/25`,
-          secondary: `${glassLevel.backdrop} bg-white/25 border border-white/30 ${textColors.primary} hover:bg-white/35 transition-all duration-300`,
-          ghost: `${theme.glassHeavy.levels.light.backdrop} bg-white/10 border border-white/20 ${textColors.secondary} hover:bg-white/20 transition-all duration-300`,
-          danger: `${glassLevel.backdrop} bg-gradient-to-r from-red-400/30 to-pink-400/30 border border-red-300/50 text-white hover:from-red-400/40 hover:to-pink-400/40`,
-          success: `${glassLevel.backdrop} bg-gradient-to-r from-emerald-400/30 to-teal-400/30 border border-emerald-300/50 text-white hover:from-emerald-400/40 hover:to-teal-400/40`,
-        },
-
-        // Input Styles - Glass Mode
-        input: {
-          base: `${glassLevel.backdrop} bg-white/15 border border-white/25 ${textColors.primary} placeholder:text-gray-600/60 rounded-xl px-4 py-3`,
-          focused: `${glassLevel.backdrop} bg-white/20 border border-white/50 ring-2 ring-white/30`,
-          error: `${glassLevel.backdrop} bg-red-400/15 border border-red-300/40 text-red-900/90`,
-          success: `${glassLevel.backdrop} bg-emerald-400/15 border border-emerald-300/40 text-emerald-900/90`,
-          search: `${theme.glassHeavy.levels.medium.backdrop} bg-white/20 border border-white/30 rounded-full px-6 py-3`,
-        },
-
-        // Text Styles - Glass Mode
-        text: {
-          primary: textColors.primary,
-          secondary: textColors.secondary,
-          tertiary: textColors.tertiary,
-          inverted: textColors.inverted,
-          muted: "text-gray-500/80",
-          accent: "text-blue-600/90",
-        },
-
-        // Background Styles - Glass Mode
-        background: {
-          page: "bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50",
-          card: `${glassLevel.backdrop} bg-white/15`,
-          overlay: `${theme.glassHeavy.levels.heavy.backdrop} bg-black/20`,
-          gradient: "bg-gradient-to-br from-white/30 to-white/10",
-          pattern:
-            "bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.1)_0%,transparent_50%)]",
-        },
-
-        // Border Styles - Glass Mode
-        border: {
-          base: "border border-white/30",
-          focused: "border border-white/50 ring-2 ring-white/20",
-          muted: "border border-white/20",
-        },
-
-        // Status Styles - Glass Mode
-        status: {
-          "want-to-read": getAdaptiveStatusStyle("want-to-read", "glass-heavy"),
-          reading: getAdaptiveStatusStyle("reading", "glass-heavy"),
-          completed: getAdaptiveStatusStyle("completed", "glass-heavy"),
-          paused: getAdaptiveStatusStyle("paused", "glass-heavy"),
-          abandoned: getAdaptiveStatusStyle("abandoned", "glass-heavy"),
-          reference: getAdaptiveStatusStyle("reference", "glass-heavy"),
-        } as Record<ReadingStatus, string>,
-
-        // Category Function - Glass Mode
-        category: (category: BookCategory) =>
-          getAdaptiveCategoryStyle(category, "glass-heavy"),
-
-        // Animation Styles - Glass Mode
-        animation: {
-          cardEnter: "animate-fade-in-up",
-          cardHover:
-            "hover:scale-[1.03] hover:-translate-y-2 transition-all duration-400 ease-out",
-          buttonHover:
-            "hover:scale-105 active:scale-95 transition-transform duration-200",
-          fadeIn: "animate-fade-in",
-          slideIn: "animate-slide-in-right",
-        },
-      };
+    if (theme.isGlassMode) {
+      return getGlassHeavyStyles(theme.glassIntensity);
     }
-
-    // ========================================================================
-    // SOFTCLUB STYLES
-    // ========================================================================
-
-    return {
-      // Container Styles - Softclub Mode
-      container: {
-        page: "min-h-screen bg-gradient-to-br from-cloud-white via-soft-cyan/5 to-lavender-mist/10",
-        main: "bg-gradient-to-br from-cloud-white/80 to-silver-matte/40 backdrop-blur-sm border border-cloud-white/30 rounded-3xl shadow-soft",
-        sidebar:
-          "bg-gradient-to-br from-cloud-white/60 to-silver-matte/20 shadow-gentle rounded-2xl",
-        modal:
-          "bg-gradient-to-br from-cloud-white/90 to-silver-matte/50 backdrop-blur-md shadow-soft-hover rounded-3xl",
-        card: "bg-gradient-to-br from-cloud-white/60 to-silver-matte/20 shadow-soft rounded-softclub",
-        floatingCard:
-          "bg-gradient-to-br from-cloud-white/80 to-silver-matte/30 shadow-soft-hover rounded-3xl",
-      },
-
-      // Button Styles - Softclub Mode
-      button: {
-        primary: createAdaptiveButton("softclub", "primary"),
-        secondary: createAdaptiveButton("softclub", "secondary"),
-        ghost:
-          "bg-cloud-white/40 hover:bg-cloud-white/60 text-midnight-navy/80 hover:text-midnight-navy border border-silver-matte/30 hover:border-soft-cyan/40 transition-all duration-300",
-        danger:
-          "bg-gradient-to-r from-sunset-coral/70 to-peachy-keen/70 text-cloud-white hover:from-sunset-coral/80 hover:to-peachy-keen/80 shadow-gentle hover:scale-105 active:scale-95",
-        success:
-          "bg-gradient-to-r from-mint-dream/80 to-soft-cyan/80 text-midnight-navy/90 hover:from-mint-dream/90 hover:to-soft-cyan/90 shadow-gentle hover:scale-105 active:scale-95",
-      },
-
-      // Input Styles - Softclub Mode
-      input: {
-        base: "bg-cloud-white/60 border border-silver-matte/40 text-midnight-navy placeholder:text-midnight-navy/50 rounded-gentle px-4 py-3 focus:border-soft-cyan/60 focus:ring-2 focus:ring-soft-cyan/20",
-        focused:
-          "bg-cloud-white/80 border-soft-cyan/60 ring-2 ring-soft-cyan/20 shadow-gentle",
-        error:
-          "bg-peachy-keen/20 border-sunset-coral/60 text-midnight-navy ring-2 ring-sunset-coral/20",
-        success:
-          "bg-mint-dream/20 border-mint-dream/60 text-midnight-navy ring-2 ring-mint-dream/20",
-        search:
-          "bg-cloud-white/70 border border-silver-matte/30 rounded-full px-6 py-3 focus:border-soft-cyan/60",
-      },
-
-      // Text Styles - Softclub Mode
-      text: {
-        primary: textColors.primary,
-        secondary: textColors.secondary,
-        tertiary: textColors.tertiary,
-        inverted: textColors.inverted,
-        muted: "text-midnight-navy/40",
-        accent: "text-soft-cyan",
-      },
-
-      // Background Styles - Softclub Mode
-      background: {
-        page: "bg-gradient-to-br from-cloud-white via-soft-cyan/5 to-lavender-mist/10",
-        card: "bg-gradient-to-br from-cloud-white/60 to-silver-matte/20",
-        overlay: "bg-midnight-navy/40 backdrop-blur-sm",
-        gradient:
-          "bg-gradient-to-br from-mint-dream/20 via-soft-cyan/15 to-lavender-mist/20",
-        pattern:
-          "bg-gradient-to-br from-midnight-navy/3 via-transparent to-midnight-navy/3",
-      },
-
-      // Border Styles - Softclub Mode
-      border: {
-        base: "border border-silver-matte/40",
-        focused: "border border-soft-cyan/60 ring-2 ring-soft-cyan/20",
-        muted: "border border-cloud-white/30",
-      },
-
-      // Status Styles - Softclub Mode
-      status: {
-        "want-to-read": getAdaptiveStatusStyle("want-to-read", "softclub"),
-        reading: getAdaptiveStatusStyle("reading", "softclub"),
-        completed: getAdaptiveStatusStyle("completed", "softclub"),
-        paused: getAdaptiveStatusStyle("paused", "softclub"),
-        abandoned: getAdaptiveStatusStyle("abandoned", "softclub"),
-        reference: getAdaptiveStatusStyle("reference", "softclub"),
-      } as Record<ReadingStatus, string>,
-
-      // Category Function - Softclub Mode
-      category: (category: BookCategory) =>
-        getAdaptiveCategoryStyle(category, "softclub"),
-
-      // Animation Styles - Softclub Mode
-      animation: {
-        cardEnter: "animate-gentle-bounce",
-        cardHover:
-          "hover:scale-102 hover:-translate-y-1 transition-all duration-500 ease-gentle",
-        buttonHover:
-          "hover:scale-105 active:scale-95 transition-all duration-300 ease-soft",
-        fadeIn: "animate-soft-pulse",
-        slideIn: "animate-float",
-      },
-    };
-  }, [theme.variant, theme.glassIntensity, theme.isGlassMode]);
+    return getSoftclubStyles();
+  }, [theme.variant, theme.glassIntensity]);
 
   return styles;
 };
 
 // ============================================================================
-// SPECIALIZED HOOKS
+// UTILITY HOOKS
 // ============================================================================
 
 /**
- * Hook for component-specific adaptive styles
+ * Hook for component-specific adaptive styling
  */
-export const useAdaptiveComponentStyles = (
-  componentType: "card" | "button" | "input" | "modal"
-) => {
-  const allStyles = useAdaptiveStyles();
-
-  return useMemo(() => {
-    switch (componentType) {
-      case "card":
-        return {
-          base: allStyles.container.card,
-          floating: allStyles.container.floatingCard,
-          hover: allStyles.animation.cardHover,
-          enter: allStyles.animation.cardEnter,
-        };
-
-      case "button":
-        return {
-          ...allStyles.button,
-          hover: allStyles.animation.buttonHover,
-        };
-
-      case "input":
-        return {
-          ...allStyles.input,
-          border: allStyles.border,
-        };
-
-      case "modal":
-        return {
-          container: allStyles.container.modal,
-          overlay: allStyles.background.overlay,
-          border: allStyles.border.base,
-        };
-
-      default:
-        return allStyles;
-    }
-  }, [allStyles, componentType]);
-};
-
-/**
- * Hook for getting status-specific styles
- */
-export const useStatusStyles = () => {
-  const { status } = useAdaptiveStyles();
-
-  return useMemo(
-    () => ({
-      getStatusStyle: (statusName: ReadingStatus) => status[statusName],
-      getAllStatuses: () => status,
-    }),
-    [status]
-  );
-};
-
-/**
- * Hook for getting category-specific styles
- */
-export const useCategoryStyles = () => {
-  const { category } = useAdaptiveStyles();
-
-  return useMemo(
-    () => ({
-      getCategoryStyle: category,
-    }),
-    [category]
-  );
-};
-
-/**
- * Hook for animation classes based on theme
- */
-export const useAdaptiveAnimations = () => {
-  const { animation } = useAdaptiveStyles();
+export const useAdaptiveComponentStyles = (component: string) => {
+  const styles = useAdaptiveStyles();
   const theme = useTheme();
 
-  return useMemo(
-    () => ({
-      ...animation,
-      // Motion preset configs for Framer Motion
-      motionPresets: theme.isGlassMode
-        ? theme.glassHeavy?.motionPresets
-        : {
-            cardEnter: {
-              initial: { opacity: 0, y: 30, scale: 0.95 },
-              animate: { opacity: 1, y: 0, scale: 1 },
-              transition: { duration: 0.6, ease: [0.25, 0.25, 0, 1] },
-            },
-            cardHover: {
-              initial: { scale: 1, y: 0 },
-              animate: { scale: 1.02, y: -4 },
-              transition: { duration: 0.3, ease: "easeOut" },
-            },
-          },
-    }),
-    [animation, theme]
-  );
+  return useMemo(() => {
+    const componentStyles = {
+      card: styles.card,
+      button: styles.button,
+      input: styles.input,
+      modal: styles.modal,
+      panel: styles.panel,
+    };
+
+    return {
+      base:
+        componentStyles[component as keyof typeof componentStyles] ||
+        styles.container,
+      text: styles.textColor,
+      border: styles.borderColor,
+      shadow: styles.shadowClass,
+      theme: theme.variant,
+      isGlass: theme.isGlassMode,
+    };
+  }, [styles, theme.variant, component]);
 };
 
-// ============================================================================
-// EXPORTS
-// ============================================================================
+/**
+ * Hook for getting theme-aware gradient classes
+ */
+export const useAdaptiveGradients = () => {
+  const theme = useTheme();
+
+  return useMemo(() => {
+    if (theme.isGlassMode) {
+      return {
+        primary:
+          "bg-gradient-to-br from-cyan-400/30 via-blue-400/25 to-indigo-400/20",
+        secondary:
+          "bg-gradient-to-br from-purple-400/30 via-pink-400/25 to-rose-400/20",
+        accent:
+          "bg-gradient-to-br from-emerald-400/30 via-teal-400/20 to-cyan-400/25",
+        warning:
+          "bg-gradient-to-br from-amber-400/25 via-orange-400/30 to-red-400/20",
+      };
+    }
+
+    return {
+      primary: "bg-gradient-to-br from-soft-cyan via-sky-300 to-blue-300",
+      secondary:
+        "bg-gradient-to-br from-lavender-mist via-purple-300 to-pink-300",
+      accent: "bg-gradient-to-br from-mint-dream via-emerald-300 to-teal-300",
+      warning: "bg-gradient-to-br from-peachy-keen via-orange-300 to-red-300",
+    };
+  }, [theme.variant]);
+};
 
 export default useAdaptiveStyles;
-
-// Named exports for convenience
-export {
-  useAdaptiveComponentStyles,
-  useStatusStyles,
-  useCategoryStyles,
-  useAdaptiveAnimations,
-};

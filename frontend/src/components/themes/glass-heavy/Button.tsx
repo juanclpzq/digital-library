@@ -3,14 +3,15 @@
 // FILE LOCATION: src/components/themes/glass-heavy/Button.tsx
 // ============================================================================
 
-import React, { useState } from "react";
-import { motion } from "framer-motion";
+import React, { useState, forwardRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/theme/ThemeProvider";
 import GlassShimmer from "./effects/GlassShimmer";
-import Condensation from "./effects/Condensation";
+import GlassRipple from "./effects/GlassRipple";
+import Refraction from "./effects/Refraction";
 
 // ============================================================================
-// BUTTON PROPS INTERFACE (SAME AS SOFTCLUB FOR COMPATIBILITY)
+// BUTTON PROPS INTERFACE (SAME AS SOFTCLUB + GLASS EXTRAS)
 // ============================================================================
 
 export interface ButtonProps
@@ -22,429 +23,428 @@ export interface ButtonProps
     | "danger"
     | "success"
     | "outline";
-  size?: "sm" | "md" | "lg" | "xl";
-  loading?: boolean;
+  size?: "xs" | "sm" | "md" | "lg" | "xl";
+  gradient?: "mint" | "cyan" | "peach" | "lavender" | "coral" | "custom";
+  customGradient?: string;
+  isLoading?: boolean;
+  loadingText?: string;
   icon?: React.ReactNode;
   iconPosition?: "left" | "right";
   fullWidth?: boolean;
-  rounded?: "none" | "sm" | "md" | "lg" | "full";
-  glow?: boolean;
+  rounded?: "sm" | "md" | "lg" | "xl" | "full";
+  shadow?: "none" | "soft" | "gentle" | "strong";
+  animate?: boolean;
   glassIntensity?: "whisper" | "light" | "medium" | "heavy" | "extreme";
-  condensation?: boolean;
   shimmer?: boolean;
+  condensation?: boolean;
+  rippleEffect?: boolean;
   children: React.ReactNode;
 }
 
 // ============================================================================
-// GLASS HEAVY BUTTON VARIANTS
+// GLASS HEAVY BUTTON STYLES
 // ============================================================================
 
-const getGlassVariantStyles = (
+const getVariantStyles = (
   variant: ButtonProps["variant"],
-  glassLevel: string
+  gradient: ButtonProps["gradient"],
+  intensity: string,
+  customGradient?: string
 ) => {
+  const glassIntensityMap = {
+    whisper: "backdrop-blur-[6px] bg-white/10",
+    light: "backdrop-blur-[12px] bg-white/15",
+    medium: "backdrop-blur-[20px] bg-white/20",
+    heavy: "backdrop-blur-[32px] bg-white/25",
+    extreme: "backdrop-blur-[48px] bg-white/30",
+  };
+
+  const gradients = {
+    mint: "bg-gradient-to-r from-emerald-400/30 via-teal-400/25 to-cyan-400/20",
+    cyan: "bg-gradient-to-r from-cyan-400/30 via-blue-400/25 to-indigo-400/20",
+    peach: "bg-gradient-to-r from-orange-400/25 via-pink-400/30 to-red-400/20",
+    lavender:
+      "bg-gradient-to-r from-purple-400/30 via-pink-400/25 to-rose-400/20",
+    coral: "bg-gradient-to-r from-pink-400/25 via-rose-400/30 to-orange-400/20",
+    custom:
+      customGradient || "bg-gradient-to-r from-cyan-400/25 to-blue-400/25",
+  };
+
+  const baseGlass =
+    glassIntensityMap[intensity as keyof typeof glassIntensityMap];
+  const baseGradient = gradients[gradient || "cyan"];
+
   const variants = {
-    primary: `
-      ${glassLevel} bg-gradient-to-r from-blue-400/30 to-purple-400/30
-      border border-blue-300/50 text-white font-bold
-      shadow-glass-lg shadow-blue-500/25
-      hover:from-blue-400/40 hover:to-purple-400/40
-      hover:border-blue-300/70 hover:shadow-glass-xl hover:shadow-blue-500/35
-      active:from-blue-400/50 active:to-purple-400/50
-    `,
+    primary: `${baseGlass} ${baseGradient} text-white font-semibold border border-white/30 hover:border-white/50 hover:bg-white/30 active:scale-95`,
 
-    secondary: `
-      ${glassLevel} bg-gradient-to-r from-white/25 to-white/15
-      border border-white/30 text-gray-900/90 font-semibold
-      shadow-glass-md hover:bg-gradient-to-r hover:from-white/35 hover:to-white/25
-      hover:border-white/50 hover:shadow-glass-lg
-      active:from-white/45 active:to-white/35
-    `,
+    secondary: `${baseGlass} bg-white/10 text-white/90 font-medium border border-white/20 hover:border-white/40 hover:bg-white/20`,
 
-    ghost: `
-      backdrop-blur-sm bg-white/10 border border-white/20
-      text-gray-900/75 hover:text-gray-900/90 font-medium
-      hover:bg-white/20 hover:border-white/30
-      shadow-none hover:shadow-glass-sm
-    `,
+    ghost: `bg-transparent text-white/80 font-medium hover:${baseGlass} hover:${baseGradient} border border-transparent hover:border-white/20`,
 
-    danger: `
-      ${glassLevel} bg-gradient-to-r from-red-400/30 to-pink-400/30
-      border border-red-300/50 text-white font-semibold
-      shadow-glass-lg shadow-red-500/25
-      hover:from-red-400/40 hover:to-pink-400/40
-      hover:border-red-300/70 hover:shadow-glass-xl hover:shadow-red-500/35
-      active:from-red-400/50 active:to-pink-400/50
-    `,
+    danger: `${baseGlass} bg-gradient-to-r from-red-400/30 to-pink-400/30 text-white font-semibold border border-red-400/40 hover:border-red-400/60 hover:from-red-400/40 hover:to-pink-400/40 active:scale-95`,
 
-    success: `
-      ${glassLevel} bg-gradient-to-r from-emerald-400/30 to-teal-400/30
-      border border-emerald-300/50 text-white font-semibold
-      shadow-glass-lg shadow-emerald-500/25
-      hover:from-emerald-400/40 hover:to-teal-400/40
-      hover:border-emerald-300/70 hover:shadow-glass-xl hover:shadow-emerald-500/35
-      active:from-emerald-400/50 active:to-teal-400/50
-    `,
+    success: `${baseGlass} ${gradients.mint} text-white font-semibold border border-emerald-400/40 hover:border-emerald-400/60 hover:bg-white/25 active:scale-95`,
 
-    outline: `
-      backdrop-blur-sm bg-transparent border-2 border-white/40
-      text-gray-900/80 hover:text-gray-900/95 font-medium
-      hover:bg-white/15 hover:border-white/60
-      shadow-none hover:shadow-glass-md
-    `,
+    outline: `bg-transparent border-2 text-white/90 font-medium hover:${baseGlass} hover:${baseGradient} border-white/30 hover:border-white/50`,
   };
 
   return variants[variant || "primary"];
 };
 
-// ============================================================================
-// SIZE VARIANTS (SAME AS SOFTCLUB)
-// ============================================================================
-
 const getSizeStyles = (size: ButtonProps["size"]) => {
   const sizes = {
-    sm: "px-4 py-2 text-sm",
-    md: "px-6 py-3 text-base",
-    lg: "px-8 py-4 text-lg",
-    xl: "px-10 py-5 text-xl",
+    xs: "px-3 py-1.5 text-xs min-h-[28px]",
+    sm: "px-4 py-2 text-sm min-h-[36px]",
+    md: "px-6 py-3 text-base min-h-[44px]",
+    lg: "px-8 py-4 text-lg min-h-[52px]",
+    xl: "px-10 py-5 text-xl min-h-[60px]",
   };
 
   return sizes[size || "md"];
 };
 
-// ============================================================================
-// ROUNDED VARIANTS
-// ============================================================================
-
 const getRoundedStyles = (rounded: ButtonProps["rounded"]) => {
-  const roundedStyles = {
-    none: "rounded-none",
+  const styles = {
     sm: "rounded-lg",
     md: "rounded-xl",
     lg: "rounded-2xl",
+    xl: "rounded-3xl",
     full: "rounded-full",
   };
 
-  return roundedStyles[rounded || "md"];
+  return styles[rounded || "xl"];
+};
+
+const getShadowStyles = (shadow: ButtonProps["shadow"]) => {
+  const shadows = {
+    none: "",
+    soft: "shadow-glass-md",
+    gentle: "shadow-glass-lg",
+    strong: "shadow-glass-xl",
+  };
+
+  return shadows[shadow || "gentle"];
 };
 
 // ============================================================================
-// MAIN COMPONENT
+// GLASS LOADING SPINNER COMPONENT
 // ============================================================================
 
-const ButtonGlassHeavy: React.FC<ButtonProps> = ({
-  variant = "primary",
-  size = "md",
-  loading = false,
-  icon,
-  iconPosition = "left",
-  fullWidth = false,
-  rounded = "md",
-  glow = false,
-  glassIntensity,
-  condensation = false,
-  shimmer = true,
-  disabled,
-  className = "",
-  children,
-  onClick,
-  ...props
+const GlassLoadingSpinner: React.FC<{ size: ButtonProps["size"] }> = ({
+  size,
 }) => {
-  const theme = useTheme();
-  const [isHovered, setIsHovered] = useState(false);
+  const spinnerSizes = {
+    xs: "w-3 h-3",
+    sm: "w-4 h-4",
+    md: "w-5 h-5",
+    lg: "w-6 h-6",
+    xl: "w-7 h-7",
+  };
 
-  // ============================================================================
-  // DYNAMIC GLASS INTENSITY
-  // ============================================================================
-
-  const intensity = glassIntensity || theme.glassIntensity;
-  const glassLevel = theme.glassHeavy.levels[intensity];
-
-  const variantStyles = getGlassVariantStyles(variant, glassLevel.backdrop);
-  const sizeStyles = getSizeStyles(size);
-  const roundedStyles = getRoundedStyles(rounded);
-
-  const baseStyles = `
-    relative inline-flex items-center justify-center gap-2
-    font-medium transition-all duration-400 ease-out
-    transform hover:scale-102 active:scale-98
-    focus:outline-none focus:ring-2 focus:ring-white/30
-    disabled:opacity-50 disabled:cursor-not-allowed 
-    disabled:hover:scale-100 disabled:hover:shadow-none
-    overflow-hidden
-    ${fullWidth ? "w-full" : ""}
-    ${variantStyles}
-    ${sizeStyles}
-    ${roundedStyles}
-    ${className}
-  `;
-
-  // ============================================================================
-  // LOADING SPINNER (GLASS STYLE)
-  // ============================================================================
-
-  const GlassLoadingSpinner = () => (
-    <motion.div
-      className="w-4 h-4 border-2 border-current border-t-transparent rounded-full backdrop-blur-sm"
-      animate={{ rotate: 360 }}
-      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-    />
+  return (
+    <motion.div className={`${spinnerSizes[size || "md"]} relative`}>
+      <motion.div
+        className="absolute inset-0 border-2 border-white/30 border-t-white/80 rounded-full"
+        animate={{ rotate: 360 }}
+        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+      />
+      <motion.div
+        className="absolute inset-1 border border-white/20 border-t-white/60 rounded-full"
+        animate={{ rotate: -360 }}
+        transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+      />
+    </motion.div>
   );
+};
 
-  // ============================================================================
-  // EVENT HANDLERS
-  // ============================================================================
+// ============================================================================
+// MAIN GLASS BUTTON COMPONENT
+// ============================================================================
 
-  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (loading || disabled) return;
-    onClick?.(e);
-  };
+const ButtonGlassHeavy = forwardRef<HTMLButtonElement, ButtonProps>(
+  (
+    {
+      variant = "primary",
+      size = "md",
+      gradient = "cyan",
+      customGradient,
+      isLoading = false,
+      loadingText,
+      icon,
+      iconPosition = "left",
+      fullWidth = false,
+      rounded = "xl",
+      shadow = "gentle",
+      animate = true,
+      glassIntensity = "medium",
+      shimmer = true,
+      condensation = false,
+      rippleEffect = true,
+      className = "",
+      disabled,
+      children,
+      onClick,
+      ...props
+    },
+    ref
+  ) => {
+    const theme = useTheme();
+    const [isPressed, setIsPressed] = useState(false);
+    const [isHovered, setIsHovered] = useState(false);
 
-  const handleMouseEnter = () => {
-    setIsHovered(true);
-  };
-
-  const handleMouseLeave = () => {
-    setIsHovered(false);
-  };
-
-  // ============================================================================
-  // RENDER CONTENT
-  // ============================================================================
-
-  const renderContent = () => {
-    if (loading) {
-      return (
-        <>
-          <GlassLoadingSpinner />
-          <span className="opacity-75">Loading...</span>
-        </>
-      );
-    }
-
-    const iconElement = icon && (
-      <span
-        className={`flex items-center ${
-          size === "sm" ? "text-sm" : size === "lg" ? "text-lg" : "text-base"
-        }`}
-      >
-        {icon}
-      </span>
+    const variantStyles = getVariantStyles(
+      variant,
+      gradient,
+      glassIntensity,
+      customGradient
     );
+    const sizeStyles = getSizeStyles(size);
+    const roundedStyles = getRoundedStyles(rounded);
+    const shadowStyles = getShadowStyles(shadow);
 
-    if (iconPosition === "right") {
-      return (
-        <>
-          <span>{children}</span>
-          {iconElement}
-        </>
-      );
-    }
+    const buttonClasses = [
+      // Base styles
+      "relative inline-flex items-center justify-center font-medium overflow-hidden",
+      "transition-all duration-400 ease-glass",
+      "focus:outline-none focus:ring-2 focus:ring-white/30 focus:ring-offset-2 focus:ring-offset-transparent",
+      "disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none",
 
-    return (
+      // Dynamic styles
+      variantStyles,
+      sizeStyles,
+      roundedStyles,
+      shadowStyles,
+
+      // Conditional styles
+      fullWidth ? "w-full" : "",
+      isLoading ? "cursor-wait" : "",
+
+      // Custom classes
+      className,
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+    // Glass animation variants
+    const buttonVariants = {
+      initial: {
+        scale: 1,
+        y: 0,
+        filter: "blur(0px)",
+      },
+      hover: animate
+        ? {
+            scale: 1.03,
+            y: -3,
+            filter: "blur(0px) brightness(1.1)",
+            transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] },
+          }
+        : {},
+      tap: animate
+        ? {
+            scale: 0.97,
+            y: 0,
+            filter: "blur(0px)",
+            transition: { duration: 0.15 },
+          }
+        : {},
+      disabled: {
+        scale: 1,
+        y: 0,
+        filter: "blur(1px) brightness(0.8)",
+      },
+    };
+
+    const iconVariants = {
+      initial: { x: 0, rotate: 0, scale: 1 },
+      hover: animate
+        ? {
+            x: iconPosition === "right" ? 3 : -3,
+            scale: 1.1,
+            transition: { duration: 0.3 },
+          }
+        : {},
+    };
+
+    const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (isLoading || disabled) return;
+
+      setIsPressed(true);
+      setTimeout(() => setIsPressed(false), 200);
+
+      onClick?.(e);
+    };
+
+    const content = (
       <>
-        {iconElement}
-        <span>{children}</span>
+        {/* Icon - Left Position */}
+        {icon && iconPosition === "left" && !isLoading && (
+          <motion.span
+            className={`${sizeStyles.includes("text-xs") ? "mr-2" : sizeStyles.includes("text-sm") ? "mr-2.5" : "mr-3"}`}
+            variants={iconVariants}
+            initial="initial"
+            whileHover="hover"
+          >
+            {icon}
+          </motion.span>
+        )}
+
+        {/* Loading Spinner */}
+        {isLoading && (
+          <motion.span
+            className={`${iconPosition === "left" ? "mr-3" : iconPosition === "right" ? "ml-3" : "mr-2"}`}
+            initial={{ opacity: 0, scale: 0.5, filter: "blur(5px)" }}
+            animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+            transition={{ duration: 0.4 }}
+          >
+            <GlassLoadingSpinner size={size} />
+          </motion.span>
+        )}
+
+        {/* Button Text */}
+        <motion.span
+          className="relative z-10"
+          initial={{ opacity: 1 }}
+          animate={{
+            opacity: isLoading ? 0.7 : 1,
+            filter: isLoading ? "blur(0.5px)" : "blur(0px)",
+          }}
+          transition={{ duration: 0.3 }}
+        >
+          {isLoading && loadingText ? loadingText : children}
+        </motion.span>
+
+        {/* Icon - Right Position */}
+        {icon && iconPosition === "right" && !isLoading && (
+          <motion.span
+            className={`${sizeStyles.includes("text-xs") ? "ml-2" : sizeStyles.includes("text-sm") ? "ml-2.5" : "ml-3"}`}
+            variants={iconVariants}
+            initial="initial"
+            whileHover="hover"
+          >
+            {icon}
+          </motion.span>
+        )}
       </>
     );
-  };
 
-  // ============================================================================
-  // RENDER COMPONENT
-  // ============================================================================
+    return (
+      <motion.button
+        ref={ref}
+        className={buttonClasses}
+        variants={buttonVariants}
+        initial="initial"
+        whileHover={!disabled && !isLoading ? "hover" : "disabled"}
+        whileTap={!disabled && !isLoading ? "tap" : "disabled"}
+        onHoverStart={() => setIsHovered(true)}
+        onHoverEnd={() => setIsHovered(false)}
+        onClick={handleClick}
+        disabled={disabled || isLoading}
+        {...props}
+      >
+        {/* Glass Effects Layer */}
+        {shimmer && (
+          <GlassShimmer
+            intensity={glassIntensity}
+            active={isHovered && !disabled}
+          />
+        )}
 
-  return (
-    <motion.button
-      className={baseStyles}
-      onClick={handleClick}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      disabled={loading || disabled}
-      whileHover={{ scale: disabled ? 1 : 1.02 }}
-      whileTap={{ scale: disabled ? 1 : 0.98 }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
-      {...props}
-    >
-      {/* Glass Refraction Lines */}
-      <div className="absolute top-0 left-2 right-2 h-[1px] bg-gradient-to-r from-transparent via-white/60 to-transparent" />
-      <div className="absolute bottom-0 left-2 right-2 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
-
-      {/* Content */}
-      <div className="relative z-10">{renderContent()}</div>
-
-      {/* Glass Shimmer Effect */}
-      {shimmer && (
-        <GlassShimmer
-          trigger="hover"
-          intensity={0.4}
-          duration={1.2}
-          className="absolute inset-0"
+        {/* Refraction Lines */}
+        <Refraction
+          intensity={isHovered ? "high" : "low"}
+          animated={isHovered}
         />
-      )}
 
-      {/* Condensation Effect */}
-      {condensation && isHovered && (
-        <Condensation
-          trigger="hover"
-          intensity={0.3}
-          duration={2}
-          dropletsCount={6}
+        {/* Ripple Effect */}
+        {rippleEffect && (
+          <GlassRipple active={isPressed} intensity={glassIntensity} />
+        )}
+
+        {/* Enhanced Glass Border */}
+        <motion.div
+          className="absolute inset-0 rounded-inherit border border-white/20 pointer-events-none"
+          animate={{
+            borderColor: isHovered
+              ? "rgba(255, 255, 255, 0.4)"
+              : "rgba(255, 255, 255, 0.2)",
+            boxShadow: isHovered
+              ? "inset 0 1px 0 rgba(255, 255, 255, 0.3)"
+              : "inset 0 1px 0 rgba(255, 255, 255, 0.1)",
+          }}
+          transition={{ duration: 0.3 }}
         />
-      )}
 
-      {/* Glow Effect */}
-      {glow && (
-        <div className="absolute inset-0 rounded-[inherit] opacity-0 hover:opacity-100 transition-opacity duration-500">
-          <div className="absolute inset-0 rounded-[inherit] bg-gradient-to-r from-transparent via-white/20 to-transparent blur-sm" />
+        {/* Press Wave Effect */}
+        <AnimatePresence>
+          {isPressed && (
+            <motion.div
+              className="absolute inset-0 bg-white/20 rounded-inherit"
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: [0, 0.5, 0], scale: [0.5, 1.2, 1.4] }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
+            />
+          )}
+        </AnimatePresence>
+
+        {/* Content Container */}
+        <div className="relative z-10 flex items-center justify-center">
+          {content}
         </div>
-      )}
 
-      {/* Enhanced Glass Depth Layer */}
-      <div className="absolute inset-2 rounded-[inherit] border border-white/20 bg-gradient-to-br from-white/10 to-transparent pointer-events-none opacity-60" />
-    </motion.button>
-  );
-};
+        {/* Glass Particles (Premium Effect) */}
+        {variant === "primary" && !disabled && isHovered && (
+          <div className="absolute inset-0 overflow-hidden rounded-inherit pointer-events-none">
+            {[...Array(4)].map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute w-1 h-1 bg-white/40 rounded-full backdrop-blur-sm"
+                style={{
+                  left: `${15 + Math.random() * 70}%`,
+                  top: `${20 + Math.random() * 60}%`,
+                }}
+                animate={{
+                  y: [0, -15, 0],
+                  opacity: [0.4, 1, 0.4],
+                  scale: [0.5, 1.5, 0.5],
+                  filter: ["blur(1px)", "blur(0px)", "blur(1px)"],
+                }}
+                transition={{
+                  duration: 2 + Math.random() * 1,
+                  repeat: Infinity,
+                  delay: Math.random() * 1,
+                  ease: "easeInOut",
+                }}
+              />
+            ))}
+          </div>
+        )}
 
-// ============================================================================
-// GLASS BUTTON GROUP COMPONENT
-// ============================================================================
+        {/* Corner Highlight */}
+        <motion.div
+          className="absolute top-0 right-0 w-8 h-8 bg-white/10 rounded-tr-inherit rounded-bl-2xl pointer-events-none"
+          animate={{
+            opacity: isHovered ? 0.6 : 0.3,
+            scale: isHovered ? 1.2 : 1,
+          }}
+          transition={{ duration: 0.3 }}
+        />
 
-interface ButtonGroupProps {
-  children: React.ReactNode;
-  variant?: ButtonProps["variant"];
-  size?: ButtonProps["size"];
-  glassIntensity?: ButtonProps["glassIntensity"];
-  className?: string;
-}
+        {/* Bottom Glow */}
+        <motion.div
+          className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-3/4 h-1 bg-white/20 blur-sm rounded-full pointer-events-none"
+          animate={{
+            opacity: isHovered ? 0.8 : 0.4,
+            scaleX: isHovered ? 1.2 : 1,
+          }}
+          transition={{ duration: 0.3 }}
+        />
+      </motion.button>
+    );
+  }
+);
 
-export const ButtonGroupGlassHeavy: React.FC<ButtonGroupProps> = ({
-  children,
-  variant = "primary",
-  size = "md",
-  glassIntensity = "medium",
-  className = "",
-}) => {
-  const theme = useTheme();
-  const glassLevel = theme.glassHeavy.levels[glassIntensity];
-
-  return (
-    <div
-      className={`
-      inline-flex ${glassLevel.backdrop} bg-white/15 border border-white/25
-      p-1 rounded-2xl shadow-glass-md overflow-hidden
-      ${className}
-    `}
-    >
-      {React.Children.map(children, (child, index) => {
-        if (React.isValidElement<ButtonProps>(child)) {
-          return React.cloneElement(child, {
-            variant: child.props.variant || variant,
-            size: child.props.size || size,
-            glassIntensity: child.props.glassIntensity || glassIntensity,
-            rounded: "md",
-            shimmer: false, // Disable individual shimmer in groups
-            className: `${child.props.className || ""} ${
-              index === 0
-                ? "rounded-l-xl rounded-r-none"
-                : index === React.Children.count(children) - 1
-                  ? "rounded-r-xl rounded-l-none"
-                  : "rounded-none"
-            }`,
-          });
-        }
-        return child;
-      })}
-
-      {/* Group shimmer effect */}
-      <GlassShimmer
-        trigger="auto"
-        intensity={0.2}
-        duration={3}
-        repeatDelay={8}
-        className="absolute inset-0"
-      />
-    </div>
-  );
-};
-
-// ============================================================================
-// GLASS ICON BUTTON VARIANT
-// ============================================================================
-
-interface IconButtonProps extends Omit<ButtonProps, "children"> {
-  icon: React.ReactNode;
-  "aria-label": string;
-}
-
-export const IconButtonGlassHeavy: React.FC<IconButtonProps> = ({
-  icon,
-  size = "md",
-  glassIntensity = "heavy",
-  className = "",
-  ...props
-}) => {
-  const iconSizes = {
-    sm: "w-8 h-8 text-sm",
-    md: "w-10 h-10 text-base",
-    lg: "w-12 h-12 text-lg",
-    xl: "w-14 h-14 text-xl",
-  };
-
-  return (
-    <ButtonGlassHeavy
-      size={size}
-      rounded="full"
-      glassIntensity={glassIntensity}
-      condensation
-      className={`${iconSizes[size]} p-0 ${className}`}
-      {...props}
-    >
-      {icon}
-    </ButtonGlassHeavy>
-  );
-};
-
-// ============================================================================
-// FLOATING ACTION BUTTON (GLASS STYLE)
-// ============================================================================
-
-interface FABProps extends Omit<ButtonProps, "variant" | "size"> {
-  position?: "bottom-right" | "bottom-left" | "top-right" | "top-left";
-  icon: React.ReactNode;
-}
-
-export const FloatingActionButtonGlassHeavy: React.FC<FABProps> = ({
-  position = "bottom-right",
-  icon,
-  glassIntensity = "extreme",
-  className = "",
-  ...props
-}) => {
-  const positions = {
-    "bottom-right": "fixed bottom-6 right-6",
-    "bottom-left": "fixed bottom-6 left-6",
-    "top-right": "fixed top-6 right-6",
-    "top-left": "fixed top-6 left-6",
-  };
-
-  return (
-    <ButtonGlassHeavy
-      variant="primary"
-      size="lg"
-      rounded="full"
-      glow
-      condensation
-      glassIntensity={glassIntensity}
-      className={`
-        ${positions[position]} z-50 shadow-glass-xl
-        w-14 h-14 p-0 hover:shadow-2xl
-        ${className}
-      `}
-      {...props}
-    >
-      {icon}
-    </ButtonGlassHeavy>
-  );
-};
+ButtonGlassHeavy.displayName = "ButtonGlassHeavy";
 
 export default ButtonGlassHeavy;
