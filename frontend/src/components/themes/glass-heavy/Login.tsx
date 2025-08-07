@@ -1,123 +1,23 @@
 // ============================================================================
-// ARCHIVO: src/components/themes/glass-heavy/LoginPage.tsx
-// DESCRIPCIÓN: Login con efectos glassmorphism avanzados premium
-// DEPENDENCIAS: src/components/themes/glass-heavy/effects/
+// ARCHIVO: src/components/themes/glass-heavy/Login.tsx - VERSIÓN CORREGIDA
 // ============================================================================
 
 import React, { useState, useRef } from "react";
 import { motion, useMotionValue, useSpring } from "framer-motion";
-import { useTheme } from "../../../theme/ThemeProvider";
 
-// Simulamos los efectos glass que ya tienes
-const GlassContainer = ({
-  children,
-  className = "",
-  effects = {},
-  ...props
+interface LoginProps {
+  onLogin?: (credentials: any) => Promise<void>;
+  onRegister?: () => void;
+  isLoading?: boolean;
+  error?: string | null;
+}
+
+export const LoginPageGlassHeavy: React.FC<LoginProps> = ({
+  onLogin,
+  onRegister,
+  isLoading = false,
+  error = null,
 }) => {
-  const [isHovered, setIsHovered] = useState(false);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-
-  const handleMouseMove = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    setMousePosition({
-      x: ((e.clientX - rect.left) / rect.width) * 100,
-      y: ((e.clientY - rect.top) / rect.height) * 100,
-    });
-  };
-
-  return (
-    <motion.div
-      className={`relative overflow-hidden backdrop-blur-2xl bg-white/10 border border-white/20 ${className}`}
-      onMouseMove={handleMouseMove}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      {...props}
-    >
-      {/* Glass Layers Effect */}
-      {effects.layers && (
-        <>
-          <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent" />
-          <div className="absolute inset-2 bg-gradient-to-tl from-white/10 to-transparent rounded-[inherit] border border-white/10" />
-          <div className="absolute inset-4 bg-gradient-to-br from-white/5 to-transparent rounded-[inherit]" />
-        </>
-      )}
-
-      {/* Condensation Effect */}
-      {effects.condensation && isHovered && (
-        <motion.div
-          className="absolute inset-0 pointer-events-none"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-        >
-          <div
-            className="absolute w-32 h-32 bg-white/30 rounded-full blur-3xl"
-            style={{
-              left: `${mousePosition.x}%`,
-              top: `${mousePosition.y}%`,
-              transform: "translate(-50%, -50%)",
-            }}
-          />
-          {/* Droplets */}
-          {[...Array(6)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute w-2 h-2 bg-white/40 rounded-full"
-              initial={{
-                x: `${mousePosition.x + (Math.random() - 0.5) * 40}%`,
-                y: `${mousePosition.y + (Math.random() - 0.5) * 40}%`,
-                scale: 0,
-              }}
-              animate={{
-                scale: [0, 1, 0],
-                y: `+=${Math.random() * 20 + 10}%`,
-              }}
-              transition={{
-                duration: 2 + Math.random() * 2,
-                delay: i * 0.2,
-              }}
-            />
-          ))}
-        </motion.div>
-      )}
-
-      {/* Refraction Lines */}
-      {effects.refraction && (
-        <>
-          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" />
-          <div className="absolute top-0 bottom-0 left-0 w-px bg-gradient-to-b from-transparent via-white/40 to-transparent" />
-          <div className="absolute top-0 bottom-0 right-0 w-px bg-gradient-to-b from-transparent via-white/20 to-transparent" />
-        </>
-      )}
-
-      {/* Shimmer Effect */}
-      {effects.shimmer && (
-        <motion.div
-          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-          animate={{
-            x: ["-100%", "100%"],
-          }}
-          transition={{
-            duration: 3,
-            repeat: Infinity,
-            ease: "linear",
-          }}
-        />
-      )}
-
-      {/* Content */}
-      <div className="relative z-10">{children}</div>
-    </motion.div>
-  );
-};
-
-// ============================================================================
-// MAIN LOGIN COMPONENT - GLASS HEAVY VERSION
-// ============================================================================
-
-export const LoginPageGlassHeavy = () => {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -125,18 +25,16 @@ export const LoginPageGlassHeavy = () => {
   });
 
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState({});
-  const [focusedField, setFocusedField] = useState(null);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
 
-  const containerRef = useRef(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
 
   const springX = useSpring(mouseX, { stiffness: 150, damping: 30 });
   const springY = useSpring(mouseY, { stiffness: 150, damping: 30 });
 
-  const handleMouseMove = (e) => {
+  const handleMouseMove = (e: React.MouseEvent) => {
     if (containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
       mouseX.set(e.clientX - rect.left);
@@ -144,11 +42,21 @@ export const LoginPageGlassHeavy = () => {
     }
   };
 
-  const handleSubmit = async () => {
-    setIsLoading(true);
-    // Simular login
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    setIsLoading(false);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.email || !formData.password) {
+      alert("Por favor completa todos los campos");
+      return;
+    }
+
+    if (onLogin) {
+      await onLogin({
+        email: formData.email,
+        password: formData.password,
+        rememberMe: formData.rememberMe,
+      });
+    }
   };
 
   const containerVariants = {
@@ -183,14 +91,15 @@ export const LoginPageGlassHeavy = () => {
 
   return (
     <div
-      className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/80 to-slate-900 flex items-center justify-center p-4 overflow-hidden"
       ref={containerRef}
+      className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/80 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden"
       onMouseMove={handleMouseMove}
     >
-      {/* Background Glass Orbs */}
-      <div className="absolute inset-0 overflow-hidden">
+      {/* Glass Background Effects */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Floating Glass Orbs */}
         <motion.div
-          className="absolute w-96 h-96 bg-purple-500/20 rounded-full blur-3xl"
+          className="absolute w-96 h-96 rounded-full bg-gradient-to-br from-white/10 to-transparent backdrop-blur-3xl"
           style={{
             x: springX,
             y: springY,
@@ -205,113 +114,92 @@ export const LoginPageGlassHeavy = () => {
             ease: "easeInOut",
           }}
         />
+
+        {/* Secondary Glass Elements */}
         <motion.div
-          className="absolute w-64 h-64 bg-blue-500/20 rounded-full blur-2xl right-20 top-20"
+          className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 backdrop-blur-2xl"
           animate={{
-            scale: [1.2, 1, 1.2],
-            opacity: [0.2, 0.5, 0.2],
+            x: [0, 100, 0],
+            y: [0, -50, 0],
+            rotate: [0, 180, 360],
           }}
           transition={{
-            duration: 6,
+            duration: 15,
             repeat: Infinity,
-            ease: "easeInOut",
-            delay: 2,
+            ease: "linear",
           }}
         />
+
         <motion.div
-          className="absolute w-80 h-80 bg-pink-500/15 rounded-full blur-3xl left-10 bottom-10"
+          className="absolute bottom-1/4 right-1/4 w-48 h-48 rounded-full bg-gradient-to-br from-cyan-500/20 to-indigo-500/20 backdrop-blur-2xl"
           animate={{
-            scale: [1, 1.3, 1],
-            opacity: [0.25, 0.4, 0.25],
+            x: [0, -80, 0],
+            y: [0, 60, 0],
+            rotate: [360, 180, 0],
           }}
           transition={{
-            duration: 10,
+            duration: 12,
             repeat: Infinity,
-            ease: "easeInOut",
-            delay: 4,
+            ease: "linear",
           }}
         />
       </div>
 
       {/* Main Login Container */}
       <motion.div
+        className="relative z-10 w-full max-w-md"
         variants={containerVariants}
         initial="initial"
         animate="animate"
-        className="relative z-10"
       >
-        <GlassContainer
-          className="w-full max-w-md rounded-3xl p-8 shadow-2xl"
-          effects={{
-            layers: true,
-            condensation: true,
-            refraction: true,
-            shimmer: true,
+        {/* Glass Login Card */}
+        <motion.div
+          className="relative backdrop-blur-2xl bg-white/10 border border-white/20 rounded-3xl p-8 shadow-2xl overflow-hidden"
+          variants={formVariants}
+          whileHover={{
+            scale: 1.02,
+            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
           }}
+          transition={{ duration: 0.3 }}
         >
-          {/* Header Section */}
-          <motion.div
-            variants={formVariants}
-            initial="initial"
-            animate="animate"
-            className="text-center mb-8"
-          >
-            {/* Logo Container */}
-            <GlassContainer
-              className="inline-flex p-4 rounded-2xl mb-6"
-              effects={{ layers: true, refraction: true }}
-            >
+          {/* Glass Layers Effect */}
+          <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent" />
+          <div className="absolute inset-2 bg-gradient-to-tl from-white/10 to-transparent rounded-[inherit] border border-white/10" />
+          <div className="absolute inset-4 bg-gradient-to-br from-white/5 to-transparent rounded-[inherit]" />
+
+          {/* Content */}
+          <div className="relative z-10">
+            {/* Header */}
+            <div className="text-center mb-8">
+              <motion.h1
+                className="text-3xl font-bold text-white mb-2"
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4, duration: 0.6 }}
+              >
+                Digital Library
+              </motion.h1>
+              <motion.p
+                className="text-white/70"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6, duration: 0.6 }}
+              >
+                Premium reading experience
+              </motion.p>
+            </div>
+
+            {/* Login Form */}
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Email Field */}
               <motion.div
-                animate={{
-                  rotate: [0, 5, -5, 0],
-                  scale: [1, 1.05, 1],
-                }}
-                transition={{
-                  duration: 4,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.8, duration: 0.5 }}
               >
-                <svg
-                  className="w-10 h-10 text-white/90"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                  />
-                </svg>
-              </motion.div>
-            </GlassContainer>
-
-            <h1 className="text-3xl font-bold text-white mb-2 bg-gradient-to-r from-white via-white/90 to-white/80 bg-clip-text text-transparent">
-              Biblioteca Digital
-            </h1>
-            <p className="text-white/70">Accede a tu colección premium</p>
-          </motion.div>
-
-          {/* Login Form */}
-          <motion.div variants={formVariants} className="space-y-6">
-            {/* Email Field */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-white/90">
-                Email
-              </label>
-              <GlassContainer
-                className={`rounded-xl transition-all duration-300 ${
-                  focusedField === "email"
-                    ? "border-white/40 bg-white/15"
-                    : "border-white/20 bg-white/10"
-                }`}
-                effects={{
-                  refraction: focusedField === "email",
-                  shimmer: focusedField === "email",
-                }}
-              >
+                <label className="block text-sm font-medium text-white/80 mb-2">
+                  Email
+                </label>
                 <input
                   type="email"
                   value={formData.email}
@@ -320,29 +208,26 @@ export const LoginPageGlassHeavy = () => {
                   }
                   onFocus={() => setFocusedField("email")}
                   onBlur={() => setFocusedField(null)}
-                  className="w-full px-4 py-3 bg-transparent text-white placeholder-white/60 focus:outline-none"
-                  placeholder="tu@email.com"
+                  className={`w-full px-4 py-3 rounded-xl backdrop-blur-sm bg-white/10 border transition-all duration-300 text-white placeholder-white/50 ${
+                    focusedField === "email"
+                      ? "border-white/40 ring-4 ring-white/20"
+                      : "border-white/20"
+                  } focus:outline-none`}
+                  placeholder="your@email.com"
+                  required
                 />
-              </GlassContainer>
-            </div>
+              </motion.div>
 
-            {/* Password Field */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-white/90">
-                Contraseña
-              </label>
-              <GlassContainer
-                className={`rounded-xl transition-all duration-300 ${
-                  focusedField === "password"
-                    ? "border-white/40 bg-white/15"
-                    : "border-white/20 bg-white/10"
-                }`}
-                effects={{
-                  refraction: focusedField === "password",
-                  shimmer: focusedField === "password",
-                }}
+              {/* Password Field */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 1, duration: 0.5 }}
               >
-                <div className="relative flex items-center">
+                <label className="block text-sm font-medium text-white/80 mb-2">
+                  Password
+                </label>
+                <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
                     value={formData.password}
@@ -354,127 +239,110 @@ export const LoginPageGlassHeavy = () => {
                     }
                     onFocus={() => setFocusedField("password")}
                     onBlur={() => setFocusedField(null)}
-                    className="w-full px-4 py-3 bg-transparent text-white placeholder-white/60 focus:outline-none pr-12"
-                    placeholder="Tu contraseña"
+                    className={`w-full px-4 py-3 rounded-xl backdrop-blur-sm bg-white/10 border transition-all duration-300 text-white placeholder-white/50 pr-12 ${
+                      focusedField === "password"
+                        ? "border-white/40 ring-4 ring-white/20"
+                        : "border-white/20"
+                    } focus:outline-none`}
+                    placeholder="••••••••"
+                    required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 text-white/60 hover:text-white/90 transition-colors"
+                    className="absolute right-3 top-3.5 text-white/60 hover:text-white transition-colors"
                   >
                     {showPassword ? "🙈" : "👁️"}
                   </button>
                 </div>
-              </GlassContainer>
-            </div>
+              </motion.div>
 
-            {/* Remember Me */}
-            <div className="flex items-center justify-between">
-              <label className="flex items-center space-x-3 cursor-pointer">
-                <GlassContainer
-                  className="w-5 h-5 rounded border border-white/30"
-                  effects={{ refraction: true }}
+              {/* Remember Me */}
+              <motion.div
+                className="flex items-center"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.2, duration: 0.5 }}
+              >
+                <input
+                  type="checkbox"
+                  id="rememberMe"
+                  checked={formData.rememberMe}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      rememberMe: e.target.checked,
+                    }))
+                  }
+                  className="h-4 w-4 text-white focus:ring-white/20 border-white/30 rounded bg-white/10"
+                />
+                <label
+                  htmlFor="rememberMe"
+                  className="ml-2 text-sm text-white/70"
                 >
-                  <input
-                    type="checkbox"
-                    checked={formData.rememberMe}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        rememberMe: e.target.checked,
-                      }))
-                    }
-                    className="w-full h-full opacity-0 cursor-pointer"
-                  />
-                  {formData.rememberMe && (
-                    <motion.div
-                      initial={{ scale: 0, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      className="absolute inset-1 bg-white/80 rounded-sm"
-                    />
-                  )}
-                </GlassContainer>
-                <span className="text-sm text-white/80">Recordarme</span>
-              </label>
+                  Remember me
+                </label>
+              </motion.div>
 
-              <button className="text-sm text-white/70 hover:text-white/90 transition-colors">
-                ¿Olvidaste tu contraseña?
-              </button>
-            </div>
+              {/* Error Message */}
+              {error && (
+                <motion.div
+                  className="p-3 backdrop-blur-sm bg-red-500/20 border border-red-400/30 rounded-xl text-red-200 text-sm"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {error}
+                </motion.div>
+              )}
 
-            {/* Login Button */}
-            <GlassContainer
-              className="rounded-xl overflow-hidden group cursor-pointer"
-              effects={{
-                layers: true,
-                condensation: true,
-                shimmer: true,
-              }}
-              onClick={handleSubmit}
-            >
+              {/* Login Button */}
               <motion.button
+                type="submit"
                 disabled={isLoading}
-                className="w-full py-4 bg-gradient-to-r from-white/20 to-white/30 text-white font-medium transition-all duration-300 group-hover:from-white/30 group-hover:to-white/40 disabled:opacity-50"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                className={`w-full py-4 backdrop-blur-sm bg-white/20 hover:bg-white/30 border border-white/30 text-white font-medium rounded-xl transition-all duration-300 ${
+                  isLoading
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:shadow-lg hover:scale-105 active:scale-95"
+                }`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.4, duration: 0.5 }}
+                whileHover={{ scale: isLoading ? 1 : 1.02 }}
+                whileTap={{ scale: isLoading ? 1 : 0.98 }}
               >
                 {isLoading ? (
                   <div className="flex items-center justify-center space-x-2">
-                    <motion.div
-                      className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
-                      animate={{ rotate: 360 }}
-                      transition={{
-                        duration: 1,
-                        repeat: Infinity,
-                        ease: "linear",
-                      }}
-                    />
-                    <span>Iniciando sesión...</span>
+                    <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                    <span>Signing in...</span>
                   </div>
                 ) : (
-                  "Iniciar Sesión"
+                  "Sign In"
                 )}
               </motion.button>
-            </GlassContainer>
 
-            {/* Register Link */}
-            <div className="text-center">
-              <span className="text-white/70 text-sm">
-                ¿No tienes cuenta?{" "}
-                <button className="text-white/90 hover:text-white font-medium transition-colors">
-                  Regístrate aquí
-                </button>
-              </span>
-            </div>
-          </motion.div>
-        </GlassContainer>
+              {/* Register Link */}
+              <motion.div
+                className="text-center"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.6, duration: 0.5 }}
+              >
+                <span className="text-white/70">
+                  Don't have an account?{" "}
+                  <button
+                    type="button"
+                    onClick={onRegister}
+                    className="font-medium text-white hover:text-white/80 transition-colors"
+                  >
+                    Join now
+                  </button>
+                </span>
+              </motion.div>
+            </form>
+          </div>
+        </motion.div>
       </motion.div>
-
-      {/* Floating Glass Particles */}
-      <div className="absolute inset-0 pointer-events-none">
-        {[...Array(12)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-2 h-2 bg-white/20 rounded-full backdrop-blur-sm"
-            initial={{
-              x: Math.random() * window.innerWidth,
-              y: Math.random() * window.innerHeight,
-              scale: 0,
-            }}
-            animate={{
-              y: [null, -100],
-              scale: [0, 1, 0],
-              opacity: [0, 0.6, 0],
-            }}
-            transition={{
-              duration: 3 + Math.random() * 4,
-              repeat: Infinity,
-              delay: Math.random() * 5,
-              ease: "easeOut",
-            }}
-          />
-        ))}
-      </div>
     </div>
   );
 };

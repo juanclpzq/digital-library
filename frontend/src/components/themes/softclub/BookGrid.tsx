@@ -292,7 +292,7 @@ const BookGridSoftclub: React.FC<BookGridProps> = ({
           layout
         >
           <AnimatePresence mode="popLayout">
-            {visibleBooks.map((book, index) => (
+            {visibleBooks.map((book) => (
               <motion.div
                 key={book._id}
                 variants={bookVariants}

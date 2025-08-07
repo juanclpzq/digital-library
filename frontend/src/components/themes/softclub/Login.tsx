@@ -1,18 +1,24 @@
 // ============================================================================
-// ARCHIVO: src/components/themes/softclub/LoginPage.tsx
-// DESCRIPCIÓN: Login nostálgico Gen X con optimismo tecnológico de los 2000s
-// DEPENDENCIAS: src/theme/softclub.ts
+// ARCHIVO: src/components/themes/softclub/Login.tsx - VERSIÓN CORREGIDA
+// DESCRIPCIÓN: Login nostálgico conectado al backend
 // ============================================================================
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { useTheme } from "../../../theme/ThemeProvider";
 
-// ============================================================================
-// MAIN LOGIN COMPONENT - SOFTCLUB VERSION
-// ============================================================================
+interface LoginProps {
+  onLogin?: (credentials: any) => Promise<void>;
+  onRegister?: () => void;
+  isLoading?: boolean;
+  error?: string | null;
+}
 
-export const LoginPageSoftclub = () => {
+export const LoginPageSoftclub: React.FC<LoginProps> = ({
+  onLogin,
+  onRegister,
+  isLoading = false,
+  error = null,
+}) => {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -20,15 +26,23 @@ export const LoginPageSoftclub = () => {
   });
 
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState({});
-  const [focusedField, setFocusedField] = useState(null);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
 
-  const handleSubmit = async () => {
-    setIsLoading(true);
-    // Simular login
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setIsLoading(false);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.email || !formData.password) {
+      alert("Por favor completa todos los campos");
+      return;
+    }
+
+    if (onLogin) {
+      await onLogin({
+        email: formData.email,
+        password: formData.password,
+        rememberMe: formData.rememberMe,
+      });
+    }
   };
 
   const containerVariants = {
@@ -79,175 +93,118 @@ export const LoginPageSoftclub = () => {
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {/* CD/DVD Rings */}
         <motion.div
-          className="absolute top-20 left-10 w-32 h-32 border-4 border-gradient-to-r from-cyan-200 to-blue-300 rounded-full opacity-20"
+          className="absolute top-20 left-10 w-32 h-32 border-4 border-cyan-200/40 rounded-full"
           variants={floatingVariants}
           animate="animate"
-        />
-        <motion.div
-          className="absolute top-40 right-20 w-24 h-24 border-4 border-purple-300 rounded-full opacity-25"
-          variants={floatingVariants}
-          animate="animate"
-          style={{ animationDelay: "2s" }}
         />
 
-        {/* Tech Grid Pattern */}
-        <div
-          className="absolute inset-0 bg-gradient-to-br from-cyan-100/30 to-purple-100/30"
-          style={{
-            backgroundImage: `
-                 linear-gradient(cyan 1px, transparent 1px),
-                 linear-gradient(90deg, cyan 1px, transparent 1px)
-               `,
-            backgroundSize: "40px 40px",
-            opacity: 0.1,
+        <motion.div
+          className="absolute bottom-20 right-16 w-24 h-24 border-4 border-indigo-200/40 rounded-full"
+          variants={floatingVariants}
+          animate="animate"
+          style={{ animationDelay: "-2s" }}
+        />
+
+        {/* Tech Squares */}
+        <motion.div
+          className="absolute top-32 right-20 w-16 h-16 bg-gradient-to-br from-purple-200/30 to-pink-200/30 rounded-lg"
+          animate={{
+            rotate: [0, 45, 0],
+            scale: [1, 1.1, 1],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut",
           }}
         />
 
-        {/* Floating Bubbles */}
-        {[...Array(8)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-3 h-3 bg-gradient-to-r from-cyan-300 to-blue-400 rounded-full opacity-30"
-            initial={{
-              x:
-                Math.random() *
-                (typeof window !== "undefined" ? window.innerWidth : 1200),
-              y: typeof window !== "undefined" ? window.innerHeight + 50 : 800,
-            }}
-            animate={{
-              y: -50,
-              x:
-                Math.random() *
-                (typeof window !== "undefined" ? window.innerWidth : 1200),
-            }}
-            transition={{
-              duration: 8 + Math.random() * 4,
-              repeat: Infinity,
-              delay: Math.random() * 5,
-              ease: "linear",
-            }}
-          />
-        ))}
+        {/* Pixel Grid Pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="grid grid-cols-20 gap-2 h-full">
+            {Array.from({ length: 400 }).map((_, i) => (
+              <div
+                key={i}
+                className="w-2 h-2 bg-gradient-to-br from-indigo-400 to-cyan-400 rounded-sm"
+                style={{
+                  animationDelay: `${i * 0.01}s`,
+                }}
+              />
+            ))}
+          </div>
+        </div>
       </div>
 
-      {/* Main Container */}
+      {/* Main Login Card */}
       <motion.div
+        className="relative z-10 w-full max-w-md"
         variants={containerVariants}
         initial="initial"
         animate="animate"
-        className="relative z-10 w-full max-w-md"
       >
-        {/* Login Card */}
         <motion.div
+          className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/20 p-8 relative overflow-hidden"
           variants={cardVariants}
-          className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/50 p-8 relative overflow-hidden"
-          whileHover={{
-            y: -5,
-            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-            transition: { duration: 0.3 },
-          }}
         >
-          {/* Soft Glow Background */}
-          <div className="absolute inset-0 bg-gradient-to-br from-cyan-100/50 via-indigo-100/30 to-purple-100/50 rounded-3xl" />
-
-          {/* Header Section */}
-          <div className="relative z-10 text-center mb-8">
-            {/* Logo Container */}
-            <motion.div
-              className="inline-flex p-4 bg-gradient-to-br from-cyan-200 to-indigo-300 rounded-2xl mb-6 shadow-lg"
-              whileHover={{
-                scale: 1.05,
-                rotate: 3,
-                transition: { duration: 0.3 },
-              }}
+          {/* Header */}
+          <div className="text-center mb-8">
+            <motion.h1
+              className="text-3xl font-bold bg-gradient-to-r from-cyan-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.6 }}
             >
-              <motion.div
-                animate={{
-                  scale: [1, 1.1, 1],
-                }}
-                transition={{
-                  duration: 3,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-              >
-                <svg
-                  className="w-10 h-10 text-indigo-700"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                  />
-                </svg>
-              </motion.div>
-            </motion.div>
-
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 bg-clip-text text-transparent mb-2">
-              Mi Biblioteca Digital
-            </h1>
-            <p className="text-gray-600 font-medium">
-              ¡Bienvenido de vuelta! 📚✨
-            </p>
+              Biblioteca Digital 📚
+            </motion.h1>
+            <motion.p
+              className="text-gray-600 mt-2"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6, duration: 0.6 }}
+            >
+              ¡Bienvenido al futuro de la lectura! 🚀
+            </motion.p>
           </div>
 
           {/* Login Form */}
-          <div className="relative z-10 space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email Field */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Email
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.8, duration: 0.5 }}
+            >
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                📧 Email
               </label>
-              <motion.div
-                className={`relative rounded-2xl transition-all duration-300 ${
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, email: e.target.value }))
+                }
+                onFocus={() => setFocusedField("email")}
+                onBlur={() => setFocusedField(null)}
+                className={`w-full px-4 py-3 rounded-xl border-2 transition-all duration-300 ${
                   focusedField === "email"
-                    ? "shadow-lg scale-[1.02]"
-                    : "shadow-md"
-                }`}
-                whileFocus={{ scale: 1.02 }}
-              >
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, email: e.target.value }))
-                  }
-                  onFocus={() => setFocusedField("email")}
-                  onBlur={() => setFocusedField(null)}
-                  className={`w-full px-4 py-3 rounded-2xl border-2 transition-all duration-300 bg-white/80 backdrop-blur-sm focus:outline-none ${
-                    focusedField === "email"
-                      ? "border-indigo-400 bg-white shadow-lg shadow-indigo-200/50"
-                      : "border-gray-200 hover:border-gray-300"
-                  }`}
-                  placeholder="tu@email.com"
-                />
-                {focusedField === "email" && (
-                  <motion.div
-                    className="absolute inset-0 rounded-2xl bg-gradient-to-r from-cyan-200/30 to-indigo-200/30 -z-10"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                  />
-                )}
-              </motion.div>
-            </div>
+                    ? "border-indigo-400 ring-4 ring-indigo-100"
+                    : "border-gray-200"
+                } focus:outline-none`}
+                placeholder="tu@email.com"
+                required
+              />
+            </motion.div>
 
             {/* Password Field */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Contraseña
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 1, duration: 0.5 }}
+            >
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                🔒 Contraseña
               </label>
-              <motion.div
-                className={`relative rounded-2xl transition-all duration-300 ${
-                  focusedField === "password"
-                    ? "shadow-lg scale-[1.02]"
-                    : "shadow-md"
-                }`}
-              >
+              <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
                   value={formData.password}
@@ -259,176 +216,107 @@ export const LoginPageSoftclub = () => {
                   }
                   onFocus={() => setFocusedField("password")}
                   onBlur={() => setFocusedField(null)}
-                  className={`w-full px-4 py-3 pr-12 rounded-2xl border-2 transition-all duration-300 bg-white/80 backdrop-blur-sm focus:outline-none ${
+                  className={`w-full px-4 py-3 rounded-xl border-2 transition-all duration-300 pr-12 ${
                     focusedField === "password"
-                      ? "border-indigo-400 bg-white shadow-lg shadow-indigo-200/50"
-                      : "border-gray-200 hover:border-gray-300"
-                  }`}
-                  placeholder="Tu contraseña"
+                      ? "border-indigo-400 ring-4 ring-indigo-100"
+                      : "border-gray-200"
+                  } focus:outline-none`}
+                  placeholder="••••••••"
+                  required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors text-lg"
+                  className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600 transition-colors"
                 >
                   {showPassword ? "🙈" : "👁️"}
                 </button>
-                {focusedField === "password" && (
-                  <motion.div
-                    className="absolute inset-0 rounded-2xl bg-gradient-to-r from-purple-200/30 to-indigo-200/30 -z-10"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                  />
-                )}
+              </div>
+            </motion.div>
+
+            {/* Remember Me */}
+            <motion.div
+              className="flex items-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.2, duration: 0.5 }}
+            >
+              <input
+                type="checkbox"
+                id="rememberMe"
+                checked={formData.rememberMe}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    rememberMe: e.target.checked,
+                  }))
+                }
+                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+              />
+              <label
+                htmlFor="rememberMe"
+                className="ml-2 text-sm text-gray-600"
+              >
+                🎯 Recordarme
+              </label>
+            </motion.div>
+
+            {/* Error Message */}
+            {error && (
+              <motion.div
+                className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                ❌ {error}
               </motion.div>
-            </div>
-
-            {/* Remember Me & Forgot Password */}
-            <div className="flex items-center justify-between">
-              <motion.label
-                className="flex items-center space-x-3 cursor-pointer group"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <div className="relative">
-                  <input
-                    type="checkbox"
-                    checked={formData.rememberMe}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        rememberMe: e.target.checked,
-                      }))
-                    }
-                    className="w-5 h-5 rounded border-2 border-gray-300 text-indigo-600 focus:ring-indigo-500 transition-all duration-200"
-                  />
-                  {formData.rememberMe && (
-                    <motion.div
-                      className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-indigo-500 rounded text-white flex items-center justify-center text-xs"
-                      initial={{ scale: 0, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{
-                        type: "spring",
-                        stiffness: 500,
-                        damping: 30,
-                      }}
-                    >
-                      ✓
-                    </motion.div>
-                  )}
-                </div>
-                <span className="text-sm text-gray-700 group-hover:text-indigo-600 transition-colors">
-                  Recordarme
-                </span>
-              </motion.label>
-
-              <motion.button
-                className="text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                ¿Olvidaste tu contraseña?
-              </motion.button>
-            </div>
+            )}
 
             {/* Login Button */}
             <motion.button
-              onClick={handleSubmit}
+              type="submit"
               disabled={isLoading}
-              className="w-full py-4 bg-gradient-to-r from-cyan-500 via-indigo-600 to-purple-600 text-white font-medium rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 relative overflow-hidden group"
-              whileHover={{
-                scale: 1.02,
-                boxShadow: "0 20px 40px -12px rgba(99, 102, 241, 0.4)",
-              }}
-              whileTap={{ scale: 0.98 }}
+              className={`w-full py-4 bg-gradient-to-r from-cyan-500 via-indigo-600 to-purple-600 text-white font-medium rounded-xl transition-all duration-300 ${
+                isLoading
+                  ? "opacity-50 cursor-not-allowed"
+                  : "hover:shadow-lg hover:scale-105 active:scale-95"
+              }`}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.4, duration: 0.5 }}
+              whileHover={{ scale: isLoading ? 1 : 1.02 }}
+              whileTap={{ scale: isLoading ? 1 : 0.98 }}
             >
-              {/* Button Glow Effect */}
-              <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 via-indigo-500 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-              {/* Button Shimmer */}
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                animate={{
-                  x: ["-100%", "100%"],
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: "linear",
-                }}
-              />
-
-              <span className="relative z-10">
-                {isLoading ? (
-                  <div className="flex items-center justify-center space-x-2">
-                    <motion.div
-                      className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
-                      animate={{ rotate: 360 }}
-                      transition={{
-                        duration: 1,
-                        repeat: Infinity,
-                        ease: "linear",
-                      }}
-                    />
-                    <span>Iniciando sesión...</span>
-                  </div>
-                ) : (
-                  <>Iniciar Sesión ✨</>
-                )}
-              </span>
+              {isLoading ? (
+                <div className="flex items-center justify-center space-x-2">
+                  <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                  <span>Iniciando sesión...</span>
+                </div>
+              ) : (
+                "🚀 ¡Entrar al futuro!"
+              )}
             </motion.button>
 
-            {/* Divider */}
-            <div className="relative flex items-center my-6">
-              <div className="flex-grow border-t border-gray-300"></div>
-              <div className="flex-shrink-0 px-4">
-                <span className="text-sm text-gray-500 bg-white px-2 rounded-full">
-                  o
-                </span>
-              </div>
-              <div className="flex-grow border-t border-gray-300"></div>
-            </div>
-
-            {/* Social Login Buttons */}
-            <div className="grid grid-cols-2 gap-4">
-              <motion.button
-                className="flex items-center justify-center py-3 px-4 bg-white border-2 border-gray-200 rounded-xl hover:border-gray-300 hover:shadow-md transition-all duration-300 group"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <span className="text-2xl mr-2">🌐</span>
-                <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900">
-                  Google
-                </span>
-              </motion.button>
-
-              <motion.button
-                className="flex items-center justify-center py-3 px-4 bg-white border-2 border-gray-200 rounded-xl hover:border-gray-300 hover:shadow-md transition-all duration-300 group"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <span className="text-2xl mr-2">📱</span>
-                <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900">
-                  Apple
-                </span>
-              </motion.button>
-            </div>
-
             {/* Register Link */}
-            <div className="text-center pt-4">
-              <span className="text-gray-600 text-sm">
-                ¿No tienes cuenta?{" "}
-                <motion.button
+            <motion.div
+              className="text-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.6, duration: 0.5 }}
+            >
+              <span className="text-gray-600">
+                ¿Nuevo en el futuro?{" "}
+                <button
+                  type="button"
+                  onClick={onRegister}
                   className="font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
                 >
                   ¡Únete ahora! 🚀
-                </motion.button>
+                </button>
               </span>
-            </div>
-          </div>
+            </motion.div>
+          </form>
 
           {/* Decorative Elements */}
           <div className="absolute top-4 right-4 w-8 h-8 bg-gradient-to-br from-cyan-200 to-indigo-300 rounded-full opacity-50"></div>
@@ -440,7 +328,7 @@ export const LoginPageSoftclub = () => {
           className="text-center mt-6"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 1, duration: 0.8 }}
+          transition={{ delay: 1.8, duration: 0.8 }}
         >
           <p className="text-sm text-gray-500 italic">
             "El futuro es ahora, ¡y está lleno de libros digitales!" 📖💫

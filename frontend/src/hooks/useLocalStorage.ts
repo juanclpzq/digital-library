@@ -1,513 +1,307 @@
 // ============================================================================
-// USE LOCAL STORAGE HOOK - PERSISTENT STATE WITH LOCALSTORAGE
+// USE LOCAL STORAGE HOOK - ALMACENAMIENTO SEGURO Y REACTIVO
 // FILE LOCATION: src/hooks/useLocalStorage.ts
 // ============================================================================
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 
-// ============================================================================
-// TYPES & INTERFACES
-// ============================================================================
-
-export interface UseLocalStorageOptions<T> {
-  serializer?: {
-    serialize: (value: T) => string;
-    deserialize: (value: string) => T;
-  };
+interface UseLocalStorageOptions {
   syncAcrossTabs?: boolean;
-  errorHandler?: (error: Error) => void;
-  validator?: (value: any) => value is T;
+  serializer?: {
+    parse: (value: string) => any;
+    stringify: (value: any) => string;
+  };
 }
 
-export interface UseLocalStorageReturn<T> {
-  value: T;
-  setValue: (value: T | ((prevValue: T) => T)) => void;
-  removeValue: () => void;
-  isLoading: boolean;
-  error: Error | null;
-}
-
-// ============================================================================
-// DEFAULT SERIALIZER
-// ============================================================================
-
-const defaultSerializer = {
-  serialize: JSON.stringify,
-  deserialize: JSON.parse,
-};
-
-// ============================================================================
-// STORAGE EVENT LISTENER MANAGER
-// ============================================================================
-
-class StorageEventManager {
-  private listeners = new Map<string, Set<(newValue: any) => void>>();
-
-  subscribe(key: string, callback: (newValue: any) => void) {
-    if (!this.listeners.has(key)) {
-      this.listeners.set(key, new Set());
-    }
-    this.listeners.get(key)!.add(callback);
-
-    // Return unsubscribe function
-    return () => {
-      const keyListeners = this.listeners.get(key);
-      if (keyListeners) {
-        keyListeners.delete(callback);
-        if (keyListeners.size === 0) {
-          this.listeners.delete(key);
-        }
-      }
-    };
-  }
-
-  notify(key: string, newValue: any) {
-    const keyListeners = this.listeners.get(key);
-    if (keyListeners) {
-      keyListeners.forEach((callback) => callback(newValue));
-    }
-  }
-
-  hasListeners(key: string): boolean {
-    return this.listeners.has(key) && this.listeners.get(key)!.size > 0;
-  }
-}
-
-const storageManager = new StorageEventManager();
-
-// ============================================================================
-// UTILITY FUNCTIONS
-// ============================================================================
-
-const isClient = typeof window !== "undefined";
-
-const getStorageValue = <T>(
+export function useLocalStorage<T>(
   key: string,
-  defaultValue: T,
-  serializer: UseLocalStorageOptions<T>["serializer"],
-  validator?: (value: any) => value is T,
-  errorHandler?: (error: Error) => void
-): T => {
-  if (!isClient) {
-    return defaultValue;
-  }
-
-  try {
-    const item = window.localStorage.getItem(key);
-
-    if (item === null) {
-      return defaultValue;
-    }
-
-    const deserializedValue =
-      serializer?.deserialize(item) ?? defaultSerializer.deserialize(item);
-
-    // Validate the deserialized value if validator is provided
-    if (validator && !validator(deserializedValue)) {
-      console.warn(
-        `Invalid data found in localStorage for key "${key}". Using default value.`
-      );
-      return defaultValue;
-    }
-
-    return deserializedValue;
-  } catch (error) {
-    const err =
-      error instanceof Error
-        ? error
-        : new Error(`Failed to parse localStorage item "${key}"`);
-    errorHandler?.(err);
-    console.error(`Error reading localStorage key "${key}":`, err);
-    return defaultValue;
-  }
-};
-
-const setStorageValue = <T>(
-  key: string,
-  value: T,
-  serializer: UseLocalStorageOptions<T>["serializer"],
-  errorHandler?: (error: Error) => void
-): boolean => {
-  if (!isClient) {
-    return false;
-  }
-
-  try {
-    const serializedValue =
-      serializer?.serialize(value) ?? defaultSerializer.serialize(value);
-    window.localStorage.setItem(key, serializedValue);
-
-    // Notify other hook instances
-    storageManager.notify(key, value);
-
-    return true;
-  } catch (error) {
-    const err =
-      error instanceof Error
-        ? error
-        : new Error(`Failed to set localStorage item "${key}"`);
-    errorHandler?.(err);
-    console.error(`Error setting localStorage key "${key}":`, err);
-    return false;
-  }
-};
-
-const removeStorageValue = (
-  key: string,
-  errorHandler?: (error: Error) => void
-): boolean => {
-  if (!isClient) {
-    return false;
-  }
-
-  try {
-    window.localStorage.removeItem(key);
-
-    // Notify other hook instances
-    storageManager.notify(key, undefined);
-
-    return true;
-  } catch (error) {
-    const err =
-      error instanceof Error
-        ? error
-        : new Error(`Failed to remove localStorage item "${key}"`);
-    errorHandler?.(err);
-    console.error(`Error removing localStorage key "${key}":`, err);
-    return false;
-  }
-};
-
-// ============================================================================
-// MAIN HOOK
-// ============================================================================
-
-/**
- * Hook for managing localStorage with React state synchronization
- *
- * @param key - The localStorage key
- * @param defaultValue - Default value if key doesn't exist
- * @param options - Configuration options
- * @returns Object with value, setter, remover, and status
- *
- * @example
- * ```tsx
- * // Basic usage
- * const { value: theme, setValue: setTheme } = useLocalStorage('theme', 'light');
- *
- * // With validation
- * const { value: user, setValue: setUser, error } = useLocalStorage(
- *   'user',
- *   null,
- *   {
- *     validator: (value): value is User => value && typeof value.id === 'string',
- *     syncAcrossTabs: true
- *   }
- * );
- *
- * // With custom serialization
- * const { value: settings, setValue: setSettings } = useLocalStorage(
- *   'settings',
- *   {},
- *   {
- *     serializer: {
- *       serialize: (value) => btoa(JSON.stringify(value)),
- *       deserialize: (value) => JSON.parse(atob(value))
- *     }
- *   }
- * );
- * ```
- */
-export const useLocalStorage = <T>(
-  key: string,
-  defaultValue: T,
-  options: UseLocalStorageOptions<T> = {}
-): UseLocalStorageReturn<T> => {
+  initialValue: T,
+  options: UseLocalStorageOptions = {}
+) {
   const {
-    serializer,
     syncAcrossTabs = false,
-    errorHandler,
-    validator,
+    serializer = {
+      parse: JSON.parse,
+      stringify: JSON.stringify,
+    },
   } = options;
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-  const [storedValue, setStoredValue] = useState<T>(defaultValue);
+  // State para almacenar el valor
+  const [storedValue, setStoredValue] = useState<T>(() => {
+    try {
+      // Intentar obtener el valor del localStorage
+      const item = window.localStorage.getItem(key);
 
-  const handleError = useCallback(
-    (err: Error) => {
-      setError(err);
-      errorHandler?.(err);
+      if (item === null) {
+        console.log(
+          `📦 useLocalStorage: No existe '${key}', usando valor inicial`
+        );
+        return initialValue;
+      }
+
+      const parsed = serializer.parse(item);
+      console.log(`📦 useLocalStorage: Cargado '${key}' desde localStorage`);
+      return parsed;
+    } catch (error) {
+      console.warn(`⚠️ useLocalStorage: Error leyendo '${key}':`, error);
+      return initialValue;
+    }
+  });
+
+  // Función para establecer el valor
+  const setValue = useCallback(
+    (value: T | ((val: T) => T)) => {
+      try {
+        // Permitir que el valor sea una función para que tengamos la misma API que useState
+        const valueToStore =
+          value instanceof Function ? value(storedValue) : value;
+
+        // Guardar estado
+        setStoredValue(valueToStore);
+
+        // Guardar en localStorage
+        if (valueToStore === undefined) {
+          window.localStorage.removeItem(key);
+          console.log(`🗑️ useLocalStorage: Removido '${key}' del localStorage`);
+        } else {
+          const stringValue = serializer.stringify(valueToStore);
+          window.localStorage.setItem(key, stringValue);
+          console.log(`💾 useLocalStorage: Guardado '${key}' en localStorage`);
+        }
+
+        // Disparar evento personalizado para sincronización entre tabs
+        if (syncAcrossTabs) {
+          window.dispatchEvent(
+            new CustomEvent(`localStorage-${key}`, {
+              detail: valueToStore,
+            })
+          );
+        }
+      } catch (error) {
+        console.error(`❌ useLocalStorage: Error guardando '${key}':`, error);
+      }
     },
-    [errorHandler]
+    [key, storedValue, serializer, syncAcrossTabs]
   );
 
-  const clearError = useCallback(() => {
-    setError(null);
-  }, []);
+  // Función para remover el valor
+  const removeValue = useCallback(() => {
+    try {
+      setStoredValue(initialValue);
+      window.localStorage.removeItem(key);
+      console.log(`🗑️ useLocalStorage: Removido '${key}' completamente`);
 
-  // Initialize value from localStorage
-  useEffect(() => {
-    const initialValue = getStorageValue(
-      key,
-      defaultValue,
-      serializer,
-      validator,
-      handleError
-    );
-
-    setStoredValue(initialValue);
-    setIsLoading(false);
-  }, [key, defaultValue, serializer, validator, handleError]);
-
-  // Set up cross-tab synchronization
-  useEffect(() => {
-    if (!syncAcrossTabs || !isClient) {
-      return;
+      // Disparar evento para sincronización
+      if (syncAcrossTabs) {
+        window.dispatchEvent(
+          new CustomEvent(`localStorage-${key}`, {
+            detail: initialValue,
+          })
+        );
+      }
+    } catch (error) {
+      console.error(`❌ useLocalStorage: Error removiendo '${key}':`, error);
     }
+  }, [key, initialValue, syncAcrossTabs]);
 
-    // Subscribe to storage events from other tabs
+  // Función para obtener el valor actual del localStorage
+  const getCurrentValue = useCallback(() => {
+    try {
+      const item = window.localStorage.getItem(key);
+      return item ? serializer.parse(item) : initialValue;
+    } catch (error) {
+      console.warn(
+        `⚠️ useLocalStorage: Error leyendo valor actual de '${key}':`,
+        error
+      );
+      return initialValue;
+    }
+  }, [key, initialValue, serializer]);
+
+  // Escuchar cambios en localStorage (entre tabs/ventanas)
+  useEffect(() => {
+    if (!syncAcrossTabs) return;
+
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === key && e.newValue !== null) {
         try {
-          const newValue =
-            serializer?.deserialize(e.newValue) ??
-            defaultSerializer.deserialize(e.newValue);
-
-          if (validator && !validator(newValue)) {
-            console.warn(
-              `Invalid data received from storage event for key "${key}"`
-            );
-            return;
-          }
-
+          const newValue = serializer.parse(e.newValue);
+          console.log(
+            `🔄 useLocalStorage: Sincronizado '${key}' desde otra tab`
+          );
           setStoredValue(newValue);
-          clearError();
         } catch (error) {
-          const err =
-            error instanceof Error
-              ? error
-              : new Error(`Failed to parse storage event for key "${key}"`);
-          handleError(err);
+          console.warn(
+            `⚠️ useLocalStorage: Error sincronizando '${key}':`,
+            error
+          );
         }
       } else if (e.key === key && e.newValue === null) {
-        // Key was removed
-        setStoredValue(defaultValue);
-        clearError();
+        // La key fue removida en otra tab
+        console.log(`🔄 useLocalStorage: '${key}' fue removido en otra tab`);
+        setStoredValue(initialValue);
       }
     };
 
-    // Subscribe to internal storage manager (for same-tab updates)
-    const unsubscribeInternal = storageManager.subscribe(key, (newValue) => {
-      if (newValue === undefined) {
-        setStoredValue(defaultValue);
-      } else {
-        setStoredValue(newValue);
-      }
-      clearError();
-    });
+    const handleCustomEvent = (e: CustomEvent) => {
+      console.log(`🔄 useLocalStorage: Evento personalizado para '${key}'`);
+      setStoredValue(e.detail);
+    };
 
+    // Escuchar eventos nativos de storage
     window.addEventListener("storage", handleStorageChange);
+
+    // Escuchar eventos personalizados para sincronización en la misma tab
+    window.addEventListener(
+      `localStorage-${key}`,
+      handleCustomEvent as EventListener
+    );
 
     return () => {
       window.removeEventListener("storage", handleStorageChange);
-      unsubscribeInternal();
+      window.removeEventListener(
+        `localStorage-${key}`,
+        handleCustomEvent as EventListener
+      );
     };
-  }, [
-    key,
-    defaultValue,
-    serializer,
-    validator,
-    syncAcrossTabs,
-    handleError,
-    clearError,
-  ]);
+  }, [key, initialValue, serializer, syncAcrossTabs]);
 
-  // Set value function
-  const setValue = useCallback(
-    (value: T | ((prevValue: T) => T)) => {
-      try {
-        clearError();
-
-        const newValue = value instanceof Function ? value(storedValue) : value;
-
-        const success = setStorageValue(key, newValue, serializer, handleError);
-
-        if (success) {
-          setStoredValue(newValue);
-        }
-      } catch (error) {
-        const err =
-          error instanceof Error
-            ? error
-            : new Error(`Failed to set value for key "${key}"`);
-        handleError(err);
-      }
-    },
-    [key, storedValue, serializer, handleError, clearError]
-  );
-
-  // Remove value function
-  const removeValue = useCallback(() => {
-    try {
-      clearError();
-
-      const success = removeStorageValue(key, handleError);
-
-      if (success) {
-        setStoredValue(defaultValue);
-      }
-    } catch (error) {
-      const err =
-        error instanceof Error
-          ? error
-          : new Error(`Failed to remove value for key "${key}"`);
-      handleError(err);
+  // Debug: Log cambios en el valor
+  useEffect(() => {
+    if (process.env.NODE_ENV === "development") {
+      console.log(`🔍 useLocalStorage: '${key}' cambió a:`, storedValue);
     }
-  }, [key, defaultValue, handleError, clearError]);
+  }, [key, storedValue]);
 
   return {
     value: storedValue,
     setValue,
     removeValue,
-    isLoading,
-    error,
+    getCurrentValue,
   };
-};
+}
 
 // ============================================================================
-// SPECIALIZED HOOKS
-// ============================================================================
-
-/**
- * Hook for boolean values in localStorage
- */
-export const useLocalStorageBoolean = (
-  key: string,
-  defaultValue = false,
-  options?: Omit<UseLocalStorageOptions<boolean>, "validator">
-) => {
-  return useLocalStorage(key, defaultValue, {
-    ...options,
-    validator: (value): value is boolean => typeof value === "boolean",
-  });
-};
-
-/**
- * Hook for number values in localStorage
- */
-export const useLocalStorageNumber = (
-  key: string,
-  defaultValue = 0,
-  options?: Omit<UseLocalStorageOptions<number>, "validator">
-) => {
-  return useLocalStorage(key, defaultValue, {
-    ...options,
-    validator: (value): value is number =>
-      typeof value === "number" && !isNaN(value),
-  });
-};
-
-/**
- * Hook for string values in localStorage
- */
-export const useLocalStorageString = (
-  key: string,
-  defaultValue = "",
-  options?: Omit<UseLocalStorageOptions<string>, "validator">
-) => {
-  return useLocalStorage(key, defaultValue, {
-    ...options,
-    validator: (value): value is string => typeof value === "string",
-  });
-};
-
-/**
- * Hook for array values in localStorage
- */
-export const useLocalStorageArray = <T = any>(
-  key: string,
-  defaultValue: T[] = [],
-  options?: Omit<UseLocalStorageOptions<T[]>, "validator">
-) => {
-  return useLocalStorage(key, defaultValue, {
-    ...options,
-    validator: (value): value is T[] => Array.isArray(value),
-  });
-};
-
-/**
- * Hook for object values in localStorage
- */
-export const useLocalStorageObject = <T extends Record<string, any>>(
-  key: string,
-  defaultValue: T,
-  options?: Omit<UseLocalStorageOptions<T>, "validator">
-) => {
-  return useLocalStorage(key, defaultValue, {
-    ...options,
-    validator: (value): value is T =>
-      value !== null && typeof value === "object" && !Array.isArray(value),
-  });
-};
-
-// ============================================================================
-// UTILITY FUNCTIONS FOR EXTERNAL USE
+// HOOKS AUXILIARES
 // ============================================================================
 
 /**
- * Get a value from localStorage without using the hook
+ * Hook para localStorage que solo devuelve el valor y una función setter simple
  */
-export const getLocalStorageItem = <T>(
+export function useSimpleLocalStorage<T>(key: string, initialValue: T) {
+  const { value, setValue } = useLocalStorage(key, initialValue);
+  return [value, setValue] as const;
+}
+
+/**
+ * Hook para localStorage con sincronización automática entre tabs
+ */
+export function useSyncedLocalStorage<T>(key: string, initialValue: T) {
+  return useLocalStorage(key, initialValue, { syncAcrossTabs: true });
+}
+
+/**
+ * Hook para localStorage con serialización personalizada
+ */
+export function useLocalStorageWithSerializer<T>(
   key: string,
-  defaultValue: T,
-  options: Pick<UseLocalStorageOptions<T>, "serializer" | "validator"> = {}
-): T => {
-  return getStorageValue(
-    key,
-    defaultValue,
-    options.serializer,
-    options.validator
-  );
-};
-
-/**
- * Set a value in localStorage without using the hook
- */
-export const setLocalStorageItem = <T>(
-  key: string,
-  value: T,
-  options: Pick<UseLocalStorageOptions<T>, "serializer"> = {}
-): boolean => {
-  return setStorageValue(key, value, options.serializer);
-};
-
-/**
- * Remove a value from localStorage without using the hook
- */
-export const removeLocalStorageItem = (key: string): boolean => {
-  return removeStorageValue(key);
-};
-
-/**
- * Clear all localStorage
- */
-export const clearLocalStorage = (): boolean => {
-  if (!isClient) {
-    return false;
+  initialValue: T,
+  serializer: {
+    parse: (value: string) => T;
+    stringify: (value: T) => string;
   }
+) {
+  return useLocalStorage(key, initialValue, { serializer });
+}
 
+// ============================================================================
+// UTILIDADES DE LOCALSTORAGE
+// ============================================================================
+
+/**
+ * Obtener un valor del localStorage de forma directa
+ */
+export function getLocalStorageItem<T>(key: string, defaultValue: T): T {
+  try {
+    const item = window.localStorage.getItem(key);
+    return item ? JSON.parse(item) : defaultValue;
+  } catch (error) {
+    console.warn(`⚠️ getLocalStorageItem: Error leyendo '${key}':`, error);
+    return defaultValue;
+  }
+}
+
+/**
+ * Establecer un valor en localStorage de forma directa
+ */
+export function setLocalStorageItem<T>(key: string, value: T): void {
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+    console.log(`💾 setLocalStorageItem: Guardado '${key}'`);
+  } catch (error) {
+    console.error(`❌ setLocalStorageItem: Error guardando '${key}':`, error);
+  }
+}
+
+/**
+ * Remover un item del localStorage
+ */
+export function removeLocalStorageItem(key: string): void {
+  try {
+    window.localStorage.removeItem(key);
+    console.log(`🗑️ removeLocalStorageItem: Removido '${key}'`);
+  } catch (error) {
+    console.error(
+      `❌ removeLocalStorageItem: Error removiendo '${key}':`,
+      error
+    );
+  }
+}
+
+/**
+ * Limpiar todo el localStorage (usar con cuidado)
+ */
+export function clearLocalStorage(): void {
   try {
     window.localStorage.clear();
-    return true;
+    console.log("🧹 clearLocalStorage: localStorage completamente limpiado");
   } catch (error) {
-    console.error("Error clearing localStorage:", error);
-    return false;
+    console.error("❌ clearLocalStorage: Error limpiando localStorage:", error);
   }
-};
+}
+
+/**
+ * Obtener todas las keys del localStorage
+ */
+export function getLocalStorageKeys(): string[] {
+  try {
+    return Object.keys(window.localStorage);
+  } catch (error) {
+    console.error("❌ getLocalStorageKeys: Error obteniendo keys:", error);
+    return [];
+  }
+}
+
+/**
+ * Obtener el tamaño usado del localStorage en bytes (aproximado)
+ */
+export function getLocalStorageSize(): number {
+  try {
+    let total = 0;
+    for (const key in window.localStorage) {
+      if (window.localStorage.hasOwnProperty(key)) {
+        total += window.localStorage[key].length + key.length;
+      }
+    }
+    return total;
+  } catch (error) {
+    console.error("❌ getLocalStorageSize: Error calculando tamaño:", error);
+    return 0;
+  }
+}
 
 // ============================================================================
-// EXPORTS
+// DEFAULT EXPORT
 // ============================================================================
 
 export default useLocalStorage;
