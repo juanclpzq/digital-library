@@ -1,3 +1,4 @@
+// backend/middleware/validation.js - CREAR ESTE ARCHIVO
 const { validationResult } = require("express-validator");
 
 const validateRequest = (req, res, next) => {
@@ -7,11 +8,17 @@ const validateRequest = (req, res, next) => {
     return res.status(400).json({
       success: false,
       message: "Validation failed",
-      errors: errors.array(),
+      errors: errors.array().map((error) => ({
+        field: error.path,
+        message: error.msg,
+        value: error.value,
+      })),
     });
   }
 
   next();
 };
 
-module.exports = { validateRequest };
+module.exports = {
+  validateRequest,
+};
