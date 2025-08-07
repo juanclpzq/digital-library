@@ -3,7 +3,7 @@
 // FILE LOCATION: src/components/themes/glass-heavy/Input.tsx
 // ============================================================================
 
-import React, { useState, forwardRef, useId } from "react";
+import React, { useState, forwardRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/theme/ThemeProvider";
 import GlassShimmer from "./effects/GlassShimmer";
@@ -14,214 +14,138 @@ import Refraction from "./effects/Refraction";
 // ============================================================================
 
 export interface InputProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "size"> {
+  extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
-  success?: string;
+  success?: boolean;
   helperText?: string;
-  size?: "xs" | "sm" | "md" | "lg" | "xl";
-  variant?: "default" | "filled" | "outline" | "underline" | "glass";
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
-  leftAddon?: React.ReactNode;
-  rightAddon?: React.ReactNode;
-  isLoading?: boolean;
-  isInvalid?: boolean;
-  isValid?: boolean;
-  focusOnMount?: boolean;
+  variant?: "default" | "filled" | "outlined" | "ghost";
+  inputSize?: "sm" | "md" | "lg";
+  rounded?: "none" | "sm" | "md" | "lg" | "full";
+  glow?: boolean;
+  loading?: boolean;
   clearable?: boolean;
   onClear?: () => void;
-  containerClassName?: string;
-  animate?: boolean;
   glassIntensity?: "whisper" | "light" | "medium" | "heavy" | "extreme";
   shimmer?: boolean;
+  refraction?: boolean;
   condensation?: boolean;
 }
 
 // ============================================================================
-// GLASS HEAVY INPUT STYLES
+// GLASS HEAVY INPUT VARIANTS
 // ============================================================================
 
-const getSizeStyles = (size: InputProps["size"]) => {
-  const sizes = {
-    xs: {
-      input: "px-3 py-1.5 text-xs min-h-[28px]",
-      icon: "w-3 h-3",
-      label: "text-xs",
-      helper: "text-xs",
-    },
-    sm: {
-      input: "px-3 py-2 text-sm min-h-[36px]",
-      icon: "w-4 h-4",
-      label: "text-sm",
-      helper: "text-xs",
-    },
-    md: {
-      input: "px-4 py-3 text-base min-h-[44px]",
-      icon: "w-5 h-5",
-      label: "text-sm",
-      helper: "text-sm",
-    },
-    lg: {
-      input: "px-5 py-4 text-lg min-h-[52px]",
-      icon: "w-6 h-6",
-      label: "text-base",
-      helper: "text-sm",
-    },
-    xl: {
-      input: "px-6 py-5 text-xl min-h-[60px]",
-      icon: "w-7 h-7",
-      label: "text-lg",
-      helper: "text-base",
-    },
-  };
-
-  return sizes[size || "md"];
-};
-
-const getVariantStyles = (
+const getGlassVariantStyles = (
   variant: InputProps["variant"],
-  intensity: string,
-  isInvalid?: boolean,
-  isValid?: boolean,
-  isFocused?: boolean
+  hasError: boolean,
+  isSuccess: boolean,
+  isFocused: boolean,
+  glassLevel: string
 ) => {
-  const glassIntensityMap = {
-    whisper: "backdrop-blur-[6px] bg-white/10",
-    light: "backdrop-blur-[12px] bg-white/15",
-    medium: "backdrop-blur-[20px] bg-white/20",
-    heavy: "backdrop-blur-[32px] bg-white/25",
-    extreme: "backdrop-blur-[48px] bg-white/30",
-  };
+  const baseTransition = "transition-all duration-400 ease-out";
 
-  const getStateColors = () => {
-    if (isInvalid) {
-      return {
-        border: "border-red-400/50 focus:border-red-400/80",
-        ring: "focus:ring-red-400/20",
-        bg: "bg-red-400/10",
-      };
-    }
+  // Error state overrides everything
+  if (hasError) {
+    return `
+      ${glassLevel} bg-gradient-to-r from-red-400/25 to-pink-400/15
+      border border-red-300/50 text-gray-900/90
+      ring-2 ring-red-300/30 shadow-glass-md shadow-red-500/20
+      placeholder:text-red-600/60
+      focus:border-red-300/70 focus:ring-red-300/40 focus:bg-red-400/20
+      ${baseTransition}
+    `;
+  }
 
-    if (isValid) {
-      return {
-        border: "border-emerald-400/50 focus:border-emerald-400/80",
-        ring: "focus:ring-emerald-400/20",
-        bg: "bg-emerald-400/10",
-      };
-    }
-
-    return {
-      border: "border-white/25 focus:border-white/50",
-      ring: "focus:ring-white/20",
-      bg: glassIntensityMap[intensity as keyof typeof glassIntensityMap],
-    };
-  };
-
-  const stateColors = getStateColors();
-  const baseGlass =
-    glassIntensityMap[intensity as keyof typeof glassIntensityMap];
+  // Success state
+  if (isSuccess) {
+    return `
+      ${glassLevel} bg-gradient-to-r from-emerald-400/25 to-teal-400/15
+      border border-emerald-300/50 text-gray-900/90
+      ring-2 ring-emerald-300/30 shadow-glass-md shadow-emerald-500/20
+      placeholder:text-emerald-600/60
+      focus:border-emerald-300/70 focus:ring-emerald-300/40 focus:bg-emerald-400/20
+      ${baseTransition}
+    `;
+  }
 
   const variants = {
-    default: `${stateColors.bg} ${stateColors.border} border rounded-xl transition-all duration-400 focus:outline-none focus:ring-2 ${stateColors.ring} shadow-glass-md`,
+    default: `
+      ${glassLevel} bg-gradient-to-r from-white/20 to-white/10
+      border border-white/30 text-gray-900/95
+      placeholder:text-gray-600/60 shadow-glass-sm
+      focus:border-white/50 focus:ring-2 focus:ring-white/25
+      focus:bg-gradient-to-r focus:from-white/30 focus:to-white/15
+      hover:border-white/40 hover:bg-gradient-to-r hover:from-white/25 hover:to-white/12
+      ${isFocused ? "border-white/60 ring-2 ring-white/30 shadow-glass-md" : ""}
+      ${baseTransition}
+    `,
 
-    filled: `${baseGlass} border-0 rounded-xl transition-all duration-400 focus:outline-none focus:ring-2 ${stateColors.ring} focus:bg-white/30 shadow-glass-md`,
+    filled: `
+      ${glassLevel} bg-gradient-to-br from-white/30 to-white/15
+      border border-white/20 text-gray-900/95
+      placeholder:text-gray-700/60 shadow-glass-md
+      focus:ring-2 focus:ring-white/30 focus:bg-gradient-to-br focus:from-white/40 focus:to-white/20
+      hover:from-white/35 hover:to-white/18 hover:border-white/30
+      ${baseTransition}
+    `,
 
-    outline: `bg-transparent ${stateColors.border} border-2 rounded-xl transition-all duration-400 focus:outline-none focus:ring-2 ${stateColors.ring}`,
+    outlined: `
+      ${glassLevel} bg-transparent border-2 border-white/40
+      text-gray-900/90 placeholder:text-gray-600/70
+      shadow-none hover:border-white/60 hover:bg-white/5
+      focus:border-white/70 focus:ring-2 focus:ring-white/25
+      focus:bg-white/10
+      ${baseTransition}
+    `,
 
-    underline: `bg-transparent border-0 border-b-2 ${stateColors.border} rounded-none transition-all duration-400 focus:outline-none px-0`,
-
-    glass: `${baseGlass} ${stateColors.border} border rounded-xl transition-all duration-400 focus:outline-none focus:ring-2 ${stateColors.ring} shadow-glass-lg`,
+    ghost: `
+      ${glassLevel} bg-transparent border border-transparent
+      text-gray-900/85 placeholder:text-gray-600/60
+      shadow-none hover:bg-white/10 hover:border-white/20
+      focus:bg-white/15 focus:border-white/30
+      focus:ring-2 focus:ring-white/20
+      ${baseTransition}
+    `,
   };
 
   return variants[variant || "default"];
 };
 
 // ============================================================================
-// GLASS LOADING SPINNER COMPONENT
+// SIZE VARIANTS (SAME AS SOFTCLUB)
 // ============================================================================
 
-const GlassInputLoadingSpinner: React.FC<{ size: string }> = ({ size }) => {
-  const sizeClass = size.includes("w-3")
-    ? "w-3 h-3"
-    : size.includes("w-4")
-      ? "w-4 h-4"
-      : size.includes("w-5")
-        ? "w-5 h-5"
-        : size.includes("w-6")
-          ? "w-6 h-6"
-          : "w-5 h-5";
+const getSizeStyles = (inputSize: InputProps["inputSize"]) => {
+  const sizes = {
+    sm: "px-3 py-2 text-sm",
+    md: "px-4 py-3 text-base",
+    lg: "px-5 py-4 text-lg",
+  };
 
-  return (
-    <motion.div className={`${sizeClass} relative`}>
-      <motion.div
-        className="absolute inset-0 border-2 border-white/20 border-t-white/70 rounded-full"
-        animate={{ rotate: 360 }}
-        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-      />
-      <motion.div
-        className="absolute inset-1 border border-white/30 border-t-white/80 rounded-full"
-        animate={{ rotate: -360 }}
-        transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-      />
-    </motion.div>
-  );
+  return sizes[inputSize || "md"];
 };
 
 // ============================================================================
-// GLASS CLEAR BUTTON COMPONENT
+// ROUNDED VARIANTS (MORE GLASS-APPROPRIATE)
 // ============================================================================
 
-const GlassClearButton: React.FC<{
-  onClear: () => void;
-  size: string;
-  show: boolean;
-}> = ({ onClear, size, show }) => {
-  const sizeClass = size.includes("w-3")
-    ? "w-3 h-3"
-    : size.includes("w-4")
-      ? "w-4 h-4"
-      : size.includes("w-5")
-        ? "w-5 h-5"
-        : size.includes("w-6")
-          ? "w-6 h-6"
-          : "w-5 h-5";
+const getRoundedStyles = (rounded: InputProps["rounded"]) => {
+  const roundedStyles = {
+    none: "rounded-none",
+    sm: "rounded-lg",
+    md: "rounded-xl",
+    lg: "rounded-2xl",
+    full: "rounded-full",
+  };
 
-  return (
-    <AnimatePresence>
-      {show && (
-        <motion.button
-          type="button"
-          onClick={onClear}
-          className={`${sizeClass} flex items-center justify-center text-white/60 hover:text-white/90 rounded-full backdrop-blur-sm bg-white/10 hover:bg-white/20 border border-white/20 transition-all duration-200`}
-          initial={{ opacity: 0, scale: 0.8, filter: "blur(5px)" }}
-          animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-          exit={{ opacity: 0, scale: 0.8, filter: "blur(5px)" }}
-          transition={{ duration: 0.3 }}
-          whileHover={{ scale: 1.1, filter: "blur(0px) brightness(1.2)" }}
-          whileTap={{ scale: 0.9 }}
-        >
-          <svg
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            className="w-3/4 h-3/4"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
-        </motion.button>
-      )}
-    </AnimatePresence>
-  );
+  return roundedStyles[rounded || "md"];
 };
 
 // ============================================================================
-// MAIN GLASS INPUT COMPONENT
+// MAIN COMPONENT
 // ============================================================================
 
 const InputGlassHeavy = forwardRef<HTMLInputElement, InputProps>(
@@ -229,27 +153,23 @@ const InputGlassHeavy = forwardRef<HTMLInputElement, InputProps>(
     {
       label,
       error,
-      success,
+      success = false,
       helperText,
-      size = "md",
-      variant = "default",
       leftIcon,
       rightIcon,
-      leftAddon,
-      rightAddon,
-      isLoading = false,
-      isInvalid = false,
-      isValid = false,
-      focusOnMount = false,
+      variant = "default",
+      inputSize = "md",
+      rounded = "md",
+      glow = false,
+      loading = false,
       clearable = false,
       onClear,
-      containerClassName = "",
-      animate = true,
-      glassIntensity = "medium",
+      glassIntensity,
       shimmer = true,
+      refraction = true,
       condensation = false,
-      className = "",
       disabled,
+      className = "",
       value,
       onChange,
       onFocus,
@@ -258,32 +178,54 @@ const InputGlassHeavy = forwardRef<HTMLInputElement, InputProps>(
     },
     ref
   ) => {
+    // ============================================================================
+    // STATE & THEME
+    // ============================================================================
+
     const theme = useTheme();
     const [isFocused, setIsFocused] = useState(false);
-    const [hasValue, setHasValue] = useState(!!value);
-    const [isHovered, setIsHovered] = useState(false);
-    const inputId = useId();
+    const [internalValue, setInternalValue] = useState(value || "");
 
-    const sizeStyles = getSizeStyles(size);
-    const variantStyles = getVariantStyles(
+    const intensity = glassIntensity || theme.glassIntensity;
+    const glassLevel = theme.glassHeavy.levels[intensity];
+
+    const hasError = Boolean(error);
+    const hasValue = Boolean(internalValue || value);
+    const showClearButton = clearable && hasValue && !disabled;
+
+    // ============================================================================
+    // DYNAMIC STYLES
+    // ============================================================================
+
+    const variantStyles = getGlassVariantStyles(
       variant,
-      glassIntensity,
-      isInvalid,
-      isValid,
-      isFocused
+      hasError,
+      success,
+      isFocused,
+      glassLevel.backdrop
     );
+    const sizeStyles = getSizeStyles(inputSize);
+    const roundedStyles = getRoundedStyles(rounded);
 
-    // Auto-focus on mount
-    React.useEffect(() => {
-      if (focusOnMount && ref && "current" in ref && ref.current) {
-        ref.current.focus();
-      }
-    }, [focusOnMount, ref]);
+    const containerStyles = `
+    relative w-full
+    ${glow && isFocused ? "filter drop-shadow-xl drop-shadow-white/20" : ""}
+  `;
 
-    // Track value changes
-    React.useEffect(() => {
-      setHasValue(!!value);
-    }, [value]);
+    const inputStyles = `
+    w-full outline-none disabled:opacity-60 disabled:cursor-not-allowed
+    relative z-10 overflow-hidden
+    ${variantStyles}
+    ${sizeStyles}  
+    ${roundedStyles}
+    ${leftIcon ? "pl-12" : ""}
+    ${rightIcon || showClearButton || loading ? "pr-12" : ""}
+    ${className}
+  `;
+
+    // ============================================================================
+    // EVENT HANDLERS
+    // ============================================================================
 
     const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
       setIsFocused(true);
@@ -296,331 +238,543 @@ const InputGlassHeavy = forwardRef<HTMLInputElement, InputProps>(
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      setHasValue(!!e.target.value);
+      setInternalValue(e.target.value);
       onChange?.(e);
     };
 
     const handleClear = () => {
-      setHasValue(false);
+      setInternalValue("");
       onClear?.();
+      if (onChange && ref && "current" in ref && ref.current) {
+        const syntheticEvent = {
+          target: { ...ref.current, value: "" },
+          currentTarget: ref.current,
+        } as React.ChangeEvent<HTMLInputElement>;
+        onChange(syntheticEvent);
+      }
     };
 
-    // Glass animation variants
-    const containerVariants = {
-      initial: { opacity: 0, y: 20, filter: "blur(10px)" },
-      animate: { opacity: 1, y: 0, filter: "blur(0px)" },
-      focus: animate
-        ? {
-            scale: 1.02,
-            filter: "blur(0px) brightness(1.1)",
-          }
-        : {},
-    };
+    // ============================================================================
+    // GLASS LOADING SPINNER
+    // ============================================================================
 
-    const labelVariants = {
-      initial: { opacity: 0, y: 10, filter: "blur(5px)" },
-      animate: { opacity: 1, y: 0, filter: "blur(0px)" },
-      focus: animate
-        ? {
-            scale: 0.95,
-            color: isInvalid ? "#f87171" : isValid ? "#34d399" : "#e0e7ff",
-            filter: "blur(0px) brightness(1.2)",
-          }
-        : {},
-    };
+    const GlassLoadingSpinner = () => (
+      <motion.div
+        className="w-4 h-4 border-2 border-current border-t-transparent rounded-full backdrop-blur-sm"
+        animate={{ rotate: 360 }}
+        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+      />
+    );
 
-    const inputClasses = [
-      "w-full transition-all duration-400 placeholder-white/50 text-white",
-      "disabled:opacity-50 disabled:cursor-not-allowed",
-      variantStyles,
-      sizeStyles.input,
-      leftIcon || leftAddon ? "pl-10" : "",
-      rightIcon || rightAddon || isLoading || (clearable && hasValue)
-        ? "pr-10"
-        : "",
-      className,
-    ]
-      .filter(Boolean)
-      .join(" ");
+    // ============================================================================
+    // RENDER COMPONENT
+    // ============================================================================
 
     return (
-      <motion.div
-        className={`relative ${containerClassName}`}
-        variants={containerVariants}
-        initial={animate ? "initial" : false}
-        animate="animate"
-        whileFocus={isFocused ? "focus" : undefined}
-        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        onHoverStart={() => setIsHovered(true)}
-        onHoverEnd={() => setIsHovered(false)}
-      >
+      <div className="w-full space-y-2">
         {/* Label */}
         {label && (
           <motion.label
-            htmlFor={inputId}
-            className={`block font-medium text-white/90 mb-3 ${sizeStyles.label}`}
-            variants={labelVariants}
-            initial={animate ? "initial" : false}
-            animate={isFocused ? "focus" : "animate"}
-            transition={{ duration: 0.3 }}
+            className={`
+            block text-sm font-semibold transition-colors duration-300
+            ${
+              hasError
+                ? "text-red-600/90"
+                : success
+                  ? "text-emerald-600/90"
+                  : isFocused
+                    ? "text-gray-900/95"
+                    : "text-gray-800/80"
+            }
+          `}
+            animate={{
+              scale: isFocused ? 1.02 : 1,
+            }}
+            transition={{ duration: 0.2 }}
           >
             {label}
           </motion.label>
         )}
 
-        {/* Input Container */}
-        <div className="relative overflow-hidden rounded-xl">
-          {/* Glass Effects Layer */}
-          {shimmer && (
-            <GlassShimmer
-              intensity={glassIntensity}
-              active={isFocused || isHovered}
-            />
-          )}
-
-          <Refraction
-            intensity={isFocused ? "high" : "low"}
-            animated={isFocused || isHovered}
-          />
-
-          {/* Left Addon */}
-          {leftAddon && (
-            <div className="absolute left-0 top-0 bottom-0 flex items-center z-20">
-              {leftAddon}
-            </div>
-          )}
-
-          {/* Left Icon */}
-          {leftIcon && !leftAddon && (
-            <motion.div
-              className={`absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60 ${sizeStyles.icon} z-20`}
-              animate={{
-                color: isFocused
-                  ? isInvalid
-                    ? "#f87171"
-                    : isValid
-                      ? "#34d399"
-                      : "#e0e7ff"
-                  : "#ffffff60",
-                scale: isFocused ? 1.1 : 1,
-              }}
-              transition={{ duration: 0.3 }}
-            >
-              {leftIcon}
-            </motion.div>
-          )}
-
-          {/* Input Field */}
-          <motion.input
-            ref={ref}
-            id={inputId}
-            className={inputClasses}
-            onFocus={handleFocus}
-            onBlur={handleBlur}
-            onChange={handleChange}
-            value={value}
-            disabled={disabled}
-            whileFocus={
-              animate
-                ? {
-                    boxShadow: isInvalid
-                      ? "0 0 0 3px rgba(248, 113, 113, 0.2), 0 8px 32px rgba(248, 113, 113, 0.1)"
-                      : isValid
-                        ? "0 0 0 3px rgba(52, 211, 153, 0.2), 0 8px 32px rgba(52, 211, 153, 0.1)"
-                        : "0 0 0 3px rgba(255, 255, 255, 0.2), 0 8px 32px rgba(255, 255, 255, 0.1)",
-                  }
-                : undefined
-            }
-            transition={{ duration: 0.3 }}
-            {...props}
-          />
-
-          {/* Right Icons Container */}
-          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center space-x-2 z-20">
-            {/* Loading Spinner */}
-            {isLoading && <GlassInputLoadingSpinner size={sizeStyles.icon} />}
-
-            {/* Clear Button */}
-            {clearable && !isLoading && (
-              <GlassClearButton
-                onClear={handleClear}
-                size={sizeStyles.icon}
-                show={hasValue && !disabled}
+        {/* Input Container with Glass Effects */}
+        <div className={containerStyles}>
+          <div className="relative">
+            {/* Glass Refraction Effects */}
+            {refraction && (
+              <Refraction
+                intensity="medium"
+                animated={isFocused}
+                className="absolute inset-0 rounded-[inherit]"
               />
             )}
 
-            {/* Right Icon */}
-            {rightIcon && !isLoading && !(clearable && hasValue) && (
-              <motion.div
-                className={`text-white/60 ${sizeStyles.icon}`}
-                animate={{
-                  color: isFocused
-                    ? isInvalid
-                      ? "#f87171"
-                      : isValid
-                        ? "#34d399"
-                        : "#e0e7ff"
-                    : "#ffffff60",
-                  scale: isFocused ? 1.1 : 1,
-                }}
-                transition={{ duration: 0.3 }}
-              >
-                {rightIcon}
-              </motion.div>
+            {/* Left Icon */}
+            {leftIcon && (
+              <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-700/70 pointer-events-none z-20">
+                <span
+                  className={`
+                ${inputSize === "sm" ? "text-sm" : inputSize === "lg" ? "text-lg" : "text-base"}
+                transition-colors duration-300
+                ${isFocused ? "text-gray-900/90" : ""}
+              `}
+                >
+                  {leftIcon}
+                </span>
+              </div>
             )}
-          </div>
 
-          {/* Right Addon */}
-          {rightAddon && (
-            <div className="absolute right-0 top-0 bottom-0 flex items-center z-20">
-              {rightAddon}
+            {/* Main Glass Input */}
+            <div className="relative">
+              <motion.input
+                ref={ref}
+                className={inputStyles}
+                disabled={disabled}
+                value={value}
+                onChange={handleChange}
+                onFocus={handleFocus}
+                onBlur={handleBlur}
+                whileFocus={{ scale: glow ? 1.01 : 1 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+                {...props}
+              />
+
+              {/* Glass Shimmer Effect */}
+              {shimmer && (
+                <GlassShimmer
+                  trigger={isFocused ? "auto" : "none"}
+                  intensity={0.3}
+                  duration={2}
+                  className="absolute inset-0 rounded-[inherit]"
+                />
+              )}
             </div>
-          )}
 
-          {/* Enhanced Glass Border */}
-          <motion.div
-            className="absolute inset-0 rounded-xl border border-white/20 pointer-events-none"
-            animate={{
-              borderColor: isFocused
-                ? isInvalid
-                  ? "rgba(248, 113, 113, 0.5)"
-                  : isValid
-                    ? "rgba(52, 211, 153, 0.5)"
-                    : "rgba(255, 255, 255, 0.4)"
-                : "rgba(255, 255, 255, 0.2)",
-              boxShadow: isFocused
-                ? "inset 0 1px 0 rgba(255, 255, 255, 0.3)"
-                : "inset 0 1px 0 rgba(255, 255, 255, 0.1)",
-            }}
-            transition={{ duration: 0.3 }}
-          />
+            {/* Right Side Icons */}
+            <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex items-center gap-2 z-20">
+              {/* Loading Spinner */}
+              {loading && <GlassLoadingSpinner />}
 
-          {/* Corner Highlights */}
-          <motion.div
-            className="absolute top-0 right-0 w-6 h-6 bg-white/10 rounded-tr-xl rounded-bl-lg pointer-events-none"
-            animate={{
-              opacity: isFocused || isHovered ? 0.6 : 0.3,
-            }}
-            transition={{ duration: 0.3 }}
-          />
+              {/* Clear Button */}
+              <AnimatePresence>
+                {showClearButton && (
+                  <motion.button
+                    type="button"
+                    onClick={handleClear}
+                    className={`
+                    ${theme.glassHeavy.levels.light.backdrop} bg-white/20 border border-white/30
+                    text-gray-700/80 hover:text-red-600/90 hover:bg-red-400/20
+                    transition-all duration-300 p-1.5 rounded-lg
+                    hover:border-red-300/50
+                    ${inputSize === "sm" ? "text-xs p-1" : "text-sm"}
+                  `}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ duration: 0.2 }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <svg
+                      className="w-3 h-3"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </motion.button>
+                )}
+              </AnimatePresence>
+
+              {/* Right Icon */}
+              {rightIcon && (
+                <span
+                  className={`
+                text-gray-700/70 transition-colors duration-300
+                ${inputSize === "sm" ? "text-sm" : inputSize === "lg" ? "text-lg" : "text-base"}
+                ${isFocused ? "text-gray-900/90" : ""}
+              `}
+                >
+                  {rightIcon}
+                </span>
+              )}
+            </div>
+
+            {/* Focus Glow Effect */}
+            <AnimatePresence>
+              {isFocused && glow && (
+                <motion.div
+                  className="absolute inset-0 rounded-[inherit] ring-2 ring-white/40 pointer-events-none"
+                  initial={{ opacity: 0, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.98 }}
+                  transition={{ duration: 0.3 }}
+                />
+              )}
+            </AnimatePresence>
+
+            {/* Glass Depth Layer */}
+            <div className="absolute inset-1 rounded-[inherit] border border-white/20 bg-gradient-to-br from-white/5 to-transparent pointer-events-none opacity-60" />
+          </div>
         </div>
 
-        {/* Helper Text / Error / Success */}
-        <AnimatePresence mode="wait">
-          {(error || success || helperText) && (
+        {/* Helper Text / Error Message */}
+        <AnimatePresence>
+          {(error || helperText) && (
             <motion.div
-              className={`mt-3 ${sizeStyles.helper}`}
-              initial={{ opacity: 0, y: -10, height: 0, filter: "blur(5px)" }}
-              animate={{
-                opacity: 1,
-                y: 0,
-                height: "auto",
-                filter: "blur(0px)",
-              }}
-              exit={{ opacity: 0, y: -10, height: 0, filter: "blur(5px)" }}
-              transition={{ duration: 0.4 }}
+              className={`
+              text-xs font-medium transition-colors duration-300
+              ${
+                hasError
+                  ? "text-red-600/90"
+                  : success
+                    ? "text-emerald-600/90"
+                    : "text-gray-700/70"
+              }
+            `}
+              initial={{ opacity: 0, y: -8, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.95 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
             >
-              {error && (
-                <motion.p
-                  className="text-red-400 font-medium flex items-center gap-2 backdrop-blur-sm bg-red-400/10 px-3 py-2 rounded-lg border border-red-400/20"
-                  initial={{ opacity: 0, x: -10, filter: "blur(5px)" }}
-                  animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
-                  transition={{ duration: 0.4 }}
-                >
-                  <svg
-                    className="w-4 h-4 flex-shrink-0"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  {error}
-                </motion.p>
-              )}
-
-              {success && !error && (
-                <motion.p
-                  className="text-emerald-400 font-medium flex items-center gap-2 backdrop-blur-sm bg-emerald-400/10 px-3 py-2 rounded-lg border border-emerald-400/20"
-                  initial={{ opacity: 0, x: -10, filter: "blur(5px)" }}
-                  animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
-                  transition={{ duration: 0.4 }}
-                >
-                  <svg
-                    className="w-4 h-4 flex-shrink-0"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  {success}
-                </motion.p>
-              )}
-
-              {helperText && !error && !success && (
-                <motion.p
-                  className="text-white/70 backdrop-blur-sm bg-white/5 px-3 py-2 rounded-lg border border-white/10"
-                  initial={{ opacity: 0, filter: "blur(3px)" }}
-                  animate={{ opacity: 1, filter: "blur(0px)" }}
-                  transition={{ duration: 0.4 }}
-                >
-                  {helperText}
-                </motion.p>
-              )}
+              {error || helperText}
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* Focus glow effect */}
-        <motion.div
-          className="absolute inset-0 rounded-xl pointer-events-none"
-          animate={{
-            boxShadow: isFocused
-              ? "0 0 40px rgba(255, 255, 255, 0.1)"
-              : "0 0 0px transparent",
-            filter: isFocused ? "blur(20px)" : "blur(0px)",
-          }}
-          transition={{ duration: 0.4 }}
-        />
-
-        {/* Floating particles on focus */}
-        {isFocused && (
-          <div className="absolute inset-0 overflow-hidden rounded-xl pointer-events-none">
-            {[...Array(3)].map((_, i) => (
-              <motion.div
-                key={i}
-                className="absolute w-1 h-1 bg-white/30 rounded-full"
-                style={{
-                  left: `${20 + Math.random() * 60}%`,
-                  top: `${30 + Math.random() * 40}%`,
-                }}
-                animate={{
-                  y: [0, -15, 0],
-                  opacity: [0.3, 0.8, 0.3],
-                  scale: [0.8, 1.3, 0.8],
-                }}
-                transition={{
-                  duration: 3 + Math.random() * 2,
-                  repeat: Infinity,
-                  delay: Math.random() * 2,
-                  ease: "easeInOut",
-                }}
-              />
-            ))}
-          </div>
-        )}
-      </motion.div>
+      </div>
     );
   }
 );
 
+// ============================================================================
+// GLASS SEARCH INPUT VARIANT
+// ============================================================================
+
+interface SearchInputProps extends Omit<InputProps, "leftIcon" | "rightIcon"> {
+  onSearch?: (value: string) => void;
+  searchIcon?: React.ReactNode;
+  showSearchButton?: boolean;
+}
+
+export const SearchInputGlassHeavy: React.FC<SearchInputProps> = ({
+  onSearch,
+  searchIcon,
+  showSearchButton = true,
+  placeholder = "Search...",
+  rounded = "full",
+  glassIntensity = "medium",
+  ...props
+}) => {
+  const [searchValue, setSearchValue] = useState("");
+  const theme = useTheme();
+
+  const defaultSearchIcon = (
+    <svg
+      className="w-5 h-5"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+      />
+    </svg>
+  );
+
+  const handleSearch = () => {
+    onSearch?.(searchValue);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
+
+  return (
+    <InputGlassHeavy
+      {...props}
+      placeholder={placeholder}
+      rounded={rounded}
+      glassIntensity={glassIntensity}
+      shimmer={true}
+      leftIcon={searchIcon || defaultSearchIcon}
+      rightIcon={
+        showSearchButton ? (
+          <motion.button
+            type="button"
+            onClick={handleSearch}
+            className={`
+              ${theme.glassHeavy.levels.medium.backdrop} bg-blue-400/30 border border-blue-300/50
+              text-white hover:bg-blue-400/40 transition-all duration-300
+              p-1.5 rounded-lg shadow-glass-sm
+            `}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <svg
+              className="w-3 h-3"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 7l5 5-5 5M6 12h12"
+              />
+            </svg>
+          </motion.button>
+        ) : undefined
+      }
+      value={searchValue}
+      onChange={(e) => setSearchValue(e.target.value)}
+      onKeyPress={handleKeyPress}
+    />
+  );
+};
+
+// ============================================================================
+// GLASS TEXTAREA VARIANT
+// ============================================================================
+
+interface TextareaProps
+  extends Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, "size"> {
+  label?: string;
+  error?: string;
+  success?: boolean;
+  helperText?: string;
+  variant?: InputProps["variant"];
+  inputSize?: InputProps["inputSize"];
+  rounded?: InputProps["rounded"];
+  glow?: boolean;
+  resize?: "none" | "vertical" | "horizontal" | "both";
+  glassIntensity?: InputProps["glassIntensity"];
+  shimmer?: boolean;
+  refraction?: boolean;
+}
+
+export const TextareaGlassHeavy = forwardRef<
+  HTMLTextAreaElement,
+  TextareaProps
+>(
+  (
+    {
+      label,
+      error,
+      success = false,
+      helperText,
+      variant = "default",
+      inputSize = "md",
+      rounded = "md",
+      glow = false,
+      resize = "vertical",
+      glassIntensity,
+      shimmer = true,
+      refraction = true,
+      disabled,
+      className = "",
+      onFocus,
+      onBlur,
+      ...props
+    },
+    ref
+  ) => {
+    const theme = useTheme();
+    const [isFocused, setIsFocused] = useState(false);
+
+    const intensity = glassIntensity || theme.glassIntensity;
+    const glassLevel = theme.glassHeavy.levels[intensity];
+
+    const hasError = Boolean(error);
+    const variantStyles = getGlassVariantStyles(
+      variant,
+      hasError,
+      success,
+      isFocused,
+      glassLevel.backdrop
+    );
+    const sizeStyles = getSizeStyles(inputSize);
+    const roundedStyles = getRoundedStyles(rounded);
+
+    const resizeStyles = {
+      none: "resize-none",
+      vertical: "resize-y",
+      horizontal: "resize-x",
+      both: "resize",
+    };
+
+    const textareaStyles = `
+    w-full outline-none disabled:opacity-60 disabled:cursor-not-allowed
+    min-h-[120px] relative z-10 ${resizeStyles[resize]}
+    ${variantStyles}
+    ${sizeStyles}
+    ${roundedStyles}
+    ${className}
+  `;
+
+    const handleFocus = (e: React.FocusEvent<HTMLTextAreaElement>) => {
+      setIsFocused(true);
+      onFocus?.(e);
+    };
+
+    const handleBlur = (e: React.FocusEvent<HTMLTextAreaElement>) => {
+      setIsFocused(false);
+      onBlur?.(e);
+    };
+
+    return (
+      <div className="w-full space-y-2">
+        {/* Label */}
+        {label && (
+          <label
+            className={`
+          block text-sm font-semibold transition-colors duration-300
+          ${
+            hasError
+              ? "text-red-600/90"
+              : success
+                ? "text-emerald-600/90"
+                : isFocused
+                  ? "text-gray-900/95"
+                  : "text-gray-800/80"
+          }
+        `}
+          >
+            {label}
+          </label>
+        )}
+
+        {/* Textarea Container */}
+        <div className="relative">
+          {/* Glass Refraction Effects */}
+          {refraction && (
+            <Refraction
+              intensity="medium"
+              animated={isFocused}
+              className="absolute inset-0 rounded-[inherit]"
+            />
+          )}
+
+          <div className="relative">
+            <motion.textarea
+              ref={ref}
+              className={textareaStyles}
+              disabled={disabled}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
+              whileFocus={{ scale: glow ? 1.005 : 1 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              {...props}
+            />
+
+            {/* Glass Shimmer Effect */}
+            {shimmer && (
+              <GlassShimmer
+                trigger={isFocused ? "auto" : "none"}
+                intensity={0.2}
+                duration={3}
+                className="absolute inset-0 rounded-[inherit]"
+              />
+            )}
+
+            {/* Glass Depth Layer */}
+            <div className="absolute inset-1 rounded-[inherit] border border-white/20 bg-gradient-to-br from-white/5 to-transparent pointer-events-none opacity-40" />
+          </div>
+        </div>
+
+        {/* Helper Text / Error Message */}
+        <AnimatePresence>
+          {(error || helperText) && (
+            <motion.div
+              className={`
+              text-xs font-medium transition-colors duration-300
+              ${
+                hasError
+                  ? "text-red-600/90"
+                  : success
+                    ? "text-emerald-600/90"
+                    : "text-gray-700/70"
+              }
+            `}
+              initial={{ opacity: 0, y: -8, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.95 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+            >
+              {error || helperText}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  }
+);
+
+// ============================================================================
+// FLOATING LABEL INPUT (GLASS SPECIFIC)
+// ============================================================================
+
+interface FloatingLabelInputProps extends InputProps {
+  label: string;
+}
+
+export const FloatingLabelInputGlassHeavy: React.FC<
+  FloatingLabelInputProps
+> = ({ label, value, glassIntensity = "heavy", ...props }) => {
+  const [isFocused, setIsFocused] = useState(false);
+  const hasValue = Boolean(value);
+  const isFloating = isFocused || hasValue;
+
+  return (
+    <div className="relative">
+      <InputGlassHeavy
+        {...props}
+        value={value}
+        glassIntensity={glassIntensity}
+        onFocus={(e) => {
+          setIsFocused(true);
+          props.onFocus?.(e);
+        }}
+        onBlur={(e) => {
+          setIsFocused(false);
+          props.onBlur?.(e);
+        }}
+        className="pt-6"
+      />
+
+      <motion.label
+        className={`
+          absolute left-4 pointer-events-none transition-all duration-300
+          ${
+            isFloating
+              ? "top-2 text-xs font-medium text-gray-700/80"
+              : "top-1/2 -translate-y-1/2 text-base text-gray-600/60"
+          }
+        `}
+        animate={{
+          y: isFloating ? 0 : "0",
+          scale: isFloating ? 0.85 : 1,
+          color: isFocused ? "#374151" : "#6b7280",
+        }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+      >
+        {label}
+      </motion.label>
+    </div>
+  );
+};
+
 InputGlassHeavy.displayName = "InputGlassHeavy";
+TextareaGlassHeavy.displayName = "TextareaGlassHeavy";
 
 export default InputGlassHeavy;
