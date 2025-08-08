@@ -1,9 +1,9 @@
 // ============================================================================
-// USE LOCAL STORAGE HOOK - ALMACENAMIENTO SEGURO Y REACTIVO
-// FILE LOCATION: src/hooks/useLocalStorage.ts
+// FIX PARA useLocalStorage.ts - OPTIMIZAR EVENTOS Y REDUCIR LOOPS
+// PROBLEMA: Eventos personalizados excesivos causando re-renders
 // ============================================================================
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 interface UseLocalStorageOptions {
   syncAcrossTabs?: boolean;
@@ -26,59 +26,98 @@ export function useLocalStorage<T>(
     },
   } = options;
 
+  // Refs para evitar loops y eventos innecesarios
+  const lastValueRef = useRef<T>();
+  const isUpdatingRef = useRef(false);
+
   // State para almacenar el valor
   const [storedValue, setStoredValue] = useState<T>(() => {
     try {
-      // Intentar obtener el valor del localStorage
       const item = window.localStorage.getItem(key);
 
       if (item === null) {
-        console.log(
-          `📦 useLocalStorage: No existe '${key}', usando valor inicial`
-        );
+        if (process.env.NODE_ENV === "development") {
+          console.log(
+            `📦 useLocalStorage: No existe '${key}', usando valor inicial`
+          );
+        }
+        lastValueRef.current = initialValue;
         return initialValue;
       }
 
       const parsed = serializer.parse(item);
-      console.log(`📦 useLocalStorage: Cargado '${key}' desde localStorage`);
+      if (process.env.NODE_ENV === "development") {
+        console.log(`📦 useLocalStorage: Cargado '${key}' desde localStorage`);
+      }
+      lastValueRef.current = parsed;
       return parsed;
     } catch (error) {
       console.warn(`⚠️ useLocalStorage: Error leyendo '${key}':`, error);
+      lastValueRef.current = initialValue;
       return initialValue;
     }
   });
 
-  // Función para establecer el valor
+  // Función optimizada para establecer el valor
   const setValue = useCallback(
     (value: T | ((val: T) => T)) => {
+      // Evitar actualizaciones innecesarias
+      if (isUpdatingRef.current) return;
+
       try {
-        // Permitir que el valor sea una función para que tengamos la misma API que useState
+        isUpdatingRef.current = true;
+
         const valueToStore =
           value instanceof Function ? value(storedValue) : value;
 
-        // Guardar estado
+        // Verificar si el valor realmente cambió
+        const stringifiedNew = serializer.stringify(valueToStore);
+        const stringifiedOld =
+          lastValueRef.current !== undefined
+            ? serializer.stringify(lastValueRef.current)
+            : null;
+
+        if (stringifiedNew === stringifiedOld) {
+          // No hay cambios reales, no hacer nada
+          return;
+        }
+
+        // Actualizar referencias
+        lastValueRef.current = valueToStore;
         setStoredValue(valueToStore);
 
         // Guardar en localStorage
         if (valueToStore === undefined) {
           window.localStorage.removeItem(key);
-          console.log(`🗑️ useLocalStorage: Removido '${key}' del localStorage`);
+          if (process.env.NODE_ENV === "development") {
+            console.log(
+              `🗑️ useLocalStorage: Removido '${key}' del localStorage`
+            );
+          }
         } else {
-          const stringValue = serializer.stringify(valueToStore);
-          window.localStorage.setItem(key, stringValue);
-          console.log(`💾 useLocalStorage: Guardado '${key}' en localStorage`);
+          window.localStorage.setItem(key, stringifiedNew);
+          if (process.env.NODE_ENV === "development") {
+            console.log(
+              `💾 useLocalStorage: Guardado '${key}' en localStorage`
+            );
+          }
         }
 
-        // Disparar evento personalizado para sincronización entre tabs
+        // Disparar evento personalizado solo si es necesario para sync
         if (syncAcrossTabs) {
-          window.dispatchEvent(
-            new CustomEvent(`localStorage-${key}`, {
-              detail: valueToStore,
-            })
-          );
+          // Usar un debounce para evitar eventos excesivos
+          setTimeout(() => {
+            window.dispatchEvent(
+              new CustomEvent(`localStorage-${key}`, {
+                detail: valueToStore,
+              })
+            );
+          }, 0);
         }
       } catch (error) {
         console.error(`❌ useLocalStorage: Error guardando '${key}':`, error);
+      } finally {
+        isUpdatingRef.current = false;
       }
     },
     [key, storedValue, serializer, syncAcrossTabs]
@@ -86,21 +125,33 @@ export function useLocalStorage<T>(
 
   // Función para remover el valor
   const removeValue = useCallback(() => {
+    if (isUpdatingRef.current) return;
+
     try {
+      isUpdatingRef.current = true;
+
+      lastValueRef.current = initialValue;
       setStoredValue(initialValue);
       window.localStorage.removeItem(key);
-      console.log(`🗑️ useLocalStorage: Removido '${key}' completamente`);
+
+      if (process.env.NODE_ENV === "development") {
+        console.log(`🗑️ useLocalStorage: Removido '${key}' completamente`);
+      }
 
       // Disparar evento para sincronización
       if (syncAcrossTabs) {
-        window.dispatchEvent(
-          new CustomEvent(`localStorage-${key}`, {
-            detail: initialValue,
-          })
-        );
+        setTimeout(() => {
+          window.dispatchEvent(
+            new CustomEvent(`localStorage-${key}`, {
+              detail: initialValue,
+            })
+          );
+        }, 0);
       }
     } catch (error) {
       console.error(`❌ useLocalStorage: Error removiendo '${key}':`, error);
+    } finally {
+      isUpdatingRef.current = false;
     }
   }, [key, initialValue, syncAcrossTabs]);
 
@@ -118,34 +169,77 @@ export function useLocalStorage<T>(
     }
   }, [key, initialValue, serializer]);
 
-  // Escuchar cambios en localStorage (entre tabs/ventanas)
+  // Escuchar cambios en localStorage (optimizado)
   useEffect(() => {
     if (!syncAcrossTabs) return;
 
+    let timeoutId: NodeJS.Timeout;
+
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === key && e.newValue !== null) {
-        try {
-          const newValue = serializer.parse(e.newValue);
-          console.log(
-            `🔄 useLocalStorage: Sincronizado '${key}' desde otra tab`
-          );
-          setStoredValue(newValue);
-        } catch (error) {
-          console.warn(
-            `⚠️ useLocalStorage: Error sincronizando '${key}':`,
-            error
-          );
-        }
-      } else if (e.key === key && e.newValue === null) {
-        // La key fue removida en otra tab
-        console.log(`🔄 useLocalStorage: '${key}' fue removido en otra tab`);
-        setStoredValue(initialValue);
+      if (e.key === key && !isUpdatingRef.current) {
+        // Debounce para evitar múltiples actualizaciones rápidas
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          try {
+            if (e.newValue !== null) {
+              const newValue = serializer.parse(e.newValue);
+              const stringifiedNew = serializer.stringify(newValue);
+              const stringifiedCurrent =
+                lastValueRef.current !== undefined
+                  ? serializer.stringify(lastValueRef.current)
+                  : null;
+
+              if (stringifiedNew !== stringifiedCurrent) {
+                if (process.env.NODE_ENV === "development") {
+                  console.log(
+                    `🔄 useLocalStorage: Sincronizado '${key}' desde otra tab`
+                  );
+                }
+                lastValueRef.current = newValue;
+                setStoredValue(newValue);
+              }
+            } else {
+              // La key fue removida en otra tab
+              if (process.env.NODE_ENV === "development") {
+                console.log(
+                  `🔄 useLocalStorage: '${key}' fue removido en otra tab`
+                );
+              }
+              lastValueRef.current = initialValue;
+              setStoredValue(initialValue);
+            }
+          } catch (error) {
+            console.warn(
+              `⚠️ useLocalStorage: Error sincronizando '${key}':`,
+              error
+            );
+          }
+        }, 50); // Debounce de 50ms
       }
     };
 
     const handleCustomEvent = (e: CustomEvent) => {
-      console.log(`🔄 useLocalStorage: Evento personalizado para '${key}'`);
-      setStoredValue(e.detail);
+      if (!isUpdatingRef.current) {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          const newValue = e.detail;
+          const stringifiedNew = serializer.stringify(newValue);
+          const stringifiedCurrent =
+            lastValueRef.current !== undefined
+              ? serializer.stringify(lastValueRef.current)
+              : null;
+
+          if (stringifiedNew !== stringifiedCurrent) {
+            if (process.env.NODE_ENV === "development") {
+              console.log(
+                `🔄 useLocalStorage: Evento personalizado para '${key}'`
+              );
+            }
+            lastValueRef.current = newValue;
+            setStoredValue(newValue);
+          }
+        }, 50);
+      }
     };
 
     // Escuchar eventos nativos de storage
@@ -158,6 +252,7 @@ export function useLocalStorage<T>(
     );
 
     return () => {
+      clearTimeout(timeoutId);
       window.removeEventListener("storage", handleStorageChange);
       window.removeEventListener(
         `localStorage-${key}`,
@@ -166,12 +261,20 @@ export function useLocalStorage<T>(
     };
   }, [key, initialValue, serializer, syncAcrossTabs]);
 
-  // Debug: Log cambios en el valor
+  // Debug optimizado: Log cambios solo cuando sea realmente necesario
   useEffect(() => {
-    if (process.env.NODE_ENV === "development") {
-      console.log(`🔍 useLocalStorage: '${key}' cambió a:`, storedValue);
+    if (process.env.NODE_ENV === "development" && !isUpdatingRef.current) {
+      const stringifiedValue = serializer.stringify(storedValue);
+      const stringifiedLast =
+        lastValueRef.current !== undefined
+          ? serializer.stringify(lastValueRef.current)
+          : null;
+
+      if (stringifiedValue !== stringifiedLast) {
+        console.log(`🔍 useLocalStorage: '${key}' cambió a:`, storedValue);
+      }
     }
-  }, [key, storedValue]);
+  }, [key, storedValue, serializer]);
 
   return {
     value: storedValue,
@@ -182,27 +285,20 @@ export function useLocalStorage<T>(
 }
 
 // ============================================================================
-// HOOKS AUXILIARES
+// HOOKS AUXILIARES OPTIMIZADOS
 // ============================================================================
 
-/**
- * Hook para localStorage que solo devuelve el valor y una función setter simple
- */
 export function useSimpleLocalStorage<T>(key: string, initialValue: T) {
-  const { value, setValue } = useLocalStorage(key, initialValue);
+  const { value, setValue } = useLocalStorage(key, initialValue, {
+    syncAcrossTabs: false, // Disable sync for simple usage
+  });
   return [value, setValue] as const;
 }
 
-/**
- * Hook para localStorage con sincronización automática entre tabs
- */
 export function useSyncedLocalStorage<T>(key: string, initialValue: T) {
   return useLocalStorage(key, initialValue, { syncAcrossTabs: true });
 }
 
-/**
- * Hook para localStorage con serialización personalizada
- */
 export function useLocalStorageWithSerializer<T>(
   key: string,
   initialValue: T,
@@ -215,12 +311,9 @@ export function useLocalStorageWithSerializer<T>(
 }
 
 // ============================================================================
-// UTILIDADES DE LOCALSTORAGE
+// UTILIDADES DE LOCALSTORAGE (sin cambios)
 // ============================================================================
 
-/**
- * Obtener un valor del localStorage de forma directa
- */
 export function getLocalStorageItem<T>(key: string, defaultValue: T): T {
   try {
     const item = window.localStorage.getItem(key);
@@ -231,25 +324,23 @@ export function getLocalStorageItem<T>(key: string, defaultValue: T): T {
   }
 }
 
-/**
- * Establecer un valor en localStorage de forma directa
- */
 export function setLocalStorageItem<T>(key: string, value: T): void {
   try {
     window.localStorage.setItem(key, JSON.stringify(value));
-    console.log(`💾 setLocalStorageItem: Guardado '${key}'`);
+    if (process.env.NODE_ENV === "development") {
+      console.log(`💾 setLocalStorageItem: Guardado '${key}'`);
+    }
   } catch (error) {
     console.error(`❌ setLocalStorageItem: Error guardando '${key}':`, error);
   }
 }
 
-/**
- * Remover un item del localStorage
- */
 export function removeLocalStorageItem(key: string): void {
   try {
     window.localStorage.removeItem(key);
-    console.log(`🗑️ removeLocalStorageItem: Removido '${key}'`);
+    if (process.env.NODE_ENV === "development") {
+      console.log(`🗑️ removeLocalStorageItem: Removido '${key}'`);
+    }
   } catch (error) {
     console.error(
       `❌ removeLocalStorageItem: Error removiendo '${key}':`,
@@ -258,9 +349,6 @@ export function removeLocalStorageItem(key: string): void {
   }
 }
 
-/**
- * Limpiar todo el localStorage (usar con cuidado)
- */
 export function clearLocalStorage(): void {
   try {
     window.localStorage.clear();
@@ -270,9 +358,6 @@ export function clearLocalStorage(): void {
   }
 }
 
-/**
- * Obtener todas las keys del localStorage
- */
 export function getLocalStorageKeys(): string[] {
   try {
     return Object.keys(window.localStorage);
@@ -282,9 +367,6 @@ export function getLocalStorageKeys(): string[] {
   }
 }
 
-/**
- * Obtener el tamaño usado del localStorage en bytes (aproximado)
- */
 export function getLocalStorageSize(): number {
   try {
     let total = 0;
@@ -299,9 +381,5 @@ export function getLocalStorageSize(): number {
     return 0;
   }
 }
-
-// ============================================================================
-// DEFAULT EXPORT
-// ============================================================================
 
 export default useLocalStorage;
