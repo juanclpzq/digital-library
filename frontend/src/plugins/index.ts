@@ -4,23 +4,30 @@
 // ============================================================================
 
 // ============================================================================
-// CORE PLUGIN SYSTEM
+// CORE PLUGIN SYSTEM - IMPORTACIONES DIRECTAS
 // ============================================================================
 
 // Base classes and interfaces
 export { BasePlugin } from "./BasePlugin";
 export type { PluginContext, PluginConfig, PluginEvent } from "./BasePlugin";
 
-// Plugin Manager (CORREGIDO: ahora es default export)
-export { default as PluginManager } from "./PluginManager";
+// Plugin Manager - CORREGIDO: importación directa
+import PluginManagerClass from "./PluginManager";
+export { PluginManagerClass as PluginManager };
+export default PluginManagerClass;
 
-// React Provider (CORREGIDO: ahora desde .tsx)
-export {
-  PluginProvider,
-  usePlugins,
-  PluginRegistry,
-  PluginDebugger,
+// React Provider - CORREGIDO: importación verificada
+import {
+  PluginProvider as PluginProviderComponent,
+  usePlugins as usePluginsHook,
+  PluginRegistry as PluginRegistryComponent,
+  PluginDebugger as PluginDebuggerComponent,
 } from "./PluginProvider";
+
+export const PluginProvider = PluginProviderComponent;
+export const usePlugins = usePluginsHook;
+export const PluginRegistry = PluginRegistryComponent;
+export const PluginDebugger = PluginDebuggerComponent;
 
 // ============================================================================
 // BUILT-IN PLUGINS
@@ -31,7 +38,7 @@ export { ThemeDebugPlugin } from "./ThemeDebugPlugin";
 export { PerformancePlugin } from "./PerformancePlugin";
 
 // ============================================================================
-// RE-IMPORT TYPES FOR LOCAL USE
+// IMPORTS FOR LOCAL USE (CORREGIDOS)
 // ============================================================================
 
 import {
@@ -39,7 +46,6 @@ import {
   type PluginContext,
   type PluginConfig,
 } from "./BasePlugin";
-import PluginManager from "./PluginManager";
 import { ThemeDebugPlugin } from "./ThemeDebugPlugin";
 import { PerformancePlugin } from "./PerformancePlugin";
 
@@ -67,7 +73,6 @@ export const createPluginContext = (
     router: {
       currentPath: window.location.pathname,
       navigate: (path: string) => {
-        // Implementar navegación si usas React Router
         console.log("Navigate to:", path);
       },
     },
@@ -161,7 +166,7 @@ export const PluginDevUtils = {
   listActivePlugins: () => {
     if (process.env.NODE_ENV === "development") {
       const manager = (window as any).__pluginManager as
-        | PluginManager
+        | PluginManagerClass
         | undefined;
       if (manager) {
         const active = manager.getActivePlugins();
@@ -188,7 +193,7 @@ export const PluginDevUtils = {
   getDetailedStats: () => {
     if (process.env.NODE_ENV === "development") {
       const manager = (window as any).__pluginManager as
-        | PluginManager
+        | PluginManagerClass
         | undefined;
       if (manager) {
         return manager.getStats();
@@ -206,7 +211,7 @@ export const PluginDevUtils = {
   forceRerender: () => {
     if (process.env.NODE_ENV === "development") {
       const manager = (window as any).__pluginManager as
-        | PluginManager
+        | PluginManagerClass
         | undefined;
       if (manager) {
         const context = manager.getContext();
@@ -224,7 +229,7 @@ export const PluginDevUtils = {
    * Registra el plugin manager globalmente para debugging
    * @param manager - Instancia del PluginManager
    */
-  registerGlobalManager: (manager: PluginManager) => {
+  registerGlobalManager: (manager: PluginManagerClass) => {
     if (process.env.NODE_ENV === "development") {
       (window as any).__pluginManager = manager;
       console.log("🔌 Plugin manager registered globally for debugging");
@@ -288,15 +293,25 @@ export const filterValidPlugins = (plugins: unknown[]): BasePlugin[] => {
 };
 
 // ============================================================================
-// DEFAULT EXPORT
+// EVITAR DEFAULT EXPORT PROBLEMÁTICO - REMOVIDO
+// ============================================================================
+// El default export original causaba el problema de referencia circular
+// Se mantiene solo la exportación de PluginManagerClass como default
+
+// ============================================================================
+// EXPORTACIONES COLECTIVAS (SIN PROBLEMAS DE REFERENCIA)
 // ============================================================================
 
-export default {
+export const PluginSystemExports = {
   // Core
   BasePlugin,
-  PluginManager,
-  PluginProvider,
-  usePlugins,
+  PluginManager: PluginManagerClass,
+  PluginProvider: PluginProviderComponent,
+  usePlugins: usePluginsHook,
+
+  // Components
+  PluginRegistry: PluginRegistryComponent,
+  PluginDebugger: PluginDebuggerComponent,
 
   // Built-in plugins
   ThemeDebugPlugin,

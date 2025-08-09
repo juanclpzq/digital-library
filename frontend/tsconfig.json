@@ -52,8 +52,12 @@
     "noImplicitAny": false,
     "noImplicitReturns": true,
     "noImplicitThis": true,
-    "noImplicitOverride": true
+    "noImplicitOverride": true,
+
+    /* AGREGADO: Para resolver mejor las exportaciones */
+    "isolatedModules": true,
+    "resolveJsonModule": true
   },
-  "include": ["src/**/*", "src/**/*.ts", "src/**/*.tsx"],
+  "include": ["src/**/*", "src/**/*.ts", "src/**/*.tsx", "src/plugins/**/*"],
   "exclude": ["node_modules", "dist", "build"]
 }
