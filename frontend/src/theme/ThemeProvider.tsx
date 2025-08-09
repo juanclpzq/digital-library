@@ -10,8 +10,6 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
-import { softclubTheme, type SoftclubTheme } from "./softclub";
-import { glassHeavyTheme, type GlassHeavyTheme } from "./glassheavy";
 
 // ============================================================================
 // THEME CONTEXT INTERFACES
@@ -24,6 +22,20 @@ export type GlassIntensity =
   | "medium"
   | "heavy"
   | "extreme";
+
+// Temporary theme definitions until we fix the imports
+export interface SoftclubTheme {
+  name: string;
+  colors: Record<string, string>;
+  motionPresets: Record<string, any>;
+}
+
+export interface GlassHeavyTheme {
+  name: string;
+  colors: Record<string, string>;
+  levels: Record<GlassIntensity, any>;
+  motionPresets: Record<string, any>;
+}
 
 export interface ThemeContextType {
   // Core Theme State
@@ -50,6 +62,45 @@ export interface ThemeContextType {
   // Persistence State
   isLoading: boolean;
 }
+
+// ============================================================================
+// TEMPORARY THEME OBJECTS (until we fix imports)
+// ============================================================================
+
+const tempSoftclubTheme: SoftclubTheme = {
+  name: "softclub",
+  colors: {
+    primary: "#3B82F6",
+    secondary: "#8B5CF6",
+    background: "#F8FAFC",
+    text: "#1E293B",
+  },
+  motionPresets: {
+    gentle: { duration: 0.3, ease: "easeOut" },
+    bounce: { duration: 0.5, ease: [0.25, 0.25, 0, 1] },
+  },
+};
+
+const tempGlassHeavyTheme: GlassHeavyTheme = {
+  name: "glass-heavy",
+  colors: {
+    primary: "rgba(59, 130, 246, 0.8)",
+    secondary: "rgba(139, 92, 246, 0.8)",
+    background: "rgba(248, 250, 252, 0.1)",
+    text: "rgba(30, 41, 59, 0.9)",
+  },
+  levels: {
+    whisper: { backdrop: "backdrop-blur-[6px]", border: "border-white/20" },
+    light: { backdrop: "backdrop-blur-[12px]", border: "border-white/25" },
+    medium: { backdrop: "backdrop-blur-[20px]", border: "border-white/30" },
+    heavy: { backdrop: "backdrop-blur-[32px]", border: "border-white/35" },
+    extreme: { backdrop: "backdrop-blur-[48px]", border: "border-white/40" },
+  },
+  motionPresets: {
+    glassFloat: { duration: 0.6, ease: [0.16, 1, 0.3, 1] },
+    shimmer: { duration: 0.4, ease: "easeOut" },
+  },
+};
 
 // ============================================================================
 // THEME CONTEXT CREATION
@@ -155,10 +206,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
 
   const setVariant = (newVariant: ThemeVariant) => {
     if (!["softclub", "glass-heavy"].includes(newVariant)) {
-      console.warn(
-        `Invalid theme variant: ${newVariant}. Using 'softclub' as fallback.`
-      );
-      setVariantState("softclub");
+      console.warn(`Invalid theme variant: ${newVariant}`);
       return;
     }
     setVariantState(newVariant);
@@ -168,17 +216,14 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     if (
       !["whisper", "light", "medium", "heavy", "extreme"].includes(newIntensity)
     ) {
-      console.warn(
-        `Invalid glass intensity: ${newIntensity}. Using 'medium' as fallback.`
-      );
-      setGlassIntensityState("medium");
+      console.warn(`Invalid glass intensity: ${newIntensity}`);
       return;
     }
     setGlassIntensityState(newIntensity);
   };
 
   // ============================================================================
-  // THEME UTILITIES
+  // THEME ACTIONS
   // ============================================================================
 
   const toggleTheme = () => {
@@ -199,8 +244,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
 
   // Get current theme object with glass intensity applied
   const currentTheme = isGlassMode
-    ? { ...glassHeavyTheme, currentIntensity: glassIntensity }
-    : softclubTheme;
+    ? { ...tempGlassHeavyTheme, currentIntensity: glassIntensity }
+    : tempSoftclubTheme;
 
   // ============================================================================
   // CONTEXT VALUE
@@ -215,8 +260,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
 
     // Theme Objects
     currentTheme,
-    softclub: softclubTheme,
-    glassHeavy: glassHeavyTheme,
+    softclub: tempSoftclubTheme,
+    glassHeavy: tempGlassHeavyTheme,
 
     // Utilities
     isGlassMode,
@@ -326,6 +371,27 @@ export const useThemeClasses = () => {
 // ============================================================================
 
 export type { SoftclubTheme, GlassHeavyTheme };
+
+// ============================================================================
+// DEBUG & DEVELOPMENT HELPERS
+// ============================================================================
+
+if (process.env.NODE_ENV === "development") {
+  // @ts-ignore
+  window.themeDebug = {
+    getContext: () => {
+      try {
+        return useTheme();
+      } catch {
+        return "ThemeProvider not found in tree";
+      }
+    },
+    themes: {
+      softclub: tempSoftclubTheme,
+      glassHeavy: tempGlassHeavyTheme,
+    },
+  };
+}
 
 // ============================================================================
 // USAGE EXAMPLE
