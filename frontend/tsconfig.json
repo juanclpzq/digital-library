@@ -1,50 +1,59 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "target": "ES2022",
     "useDefineForClassFields": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
 
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
+    "moduleDetection": "force",
     "noEmit": true,
 
-    /* JSX Configuration - ESTO ES CRÍTICO */
+    /* JSX Configuration - CORREGIDO */
     "jsx": "react-jsx",
     "jsxImportSource": "react",
 
-    /* Linting */
+    /* CORREGIDO: Deshabilitar verbatimModuleSyntax para compatibilidad con React */
+    "verbatimModuleSyntax": false,
+
+    /* Path mapping for imports */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@/components/*": ["./src/components/*"],
+      "@/lib/*": ["./src/lib/*"],
+      "@/hooks/*": ["./src/hooks/*"],
+      "@/types/*": ["./src/types/*"],
+      "@/api/*": ["./src/api/*"],
+      "@/utils/*": ["./src/utils/*"],
+      "@/plugins/*": ["./src/plugins/*"]
+    },
+
+    /* Module imports - AÑADIDO para compatibilidad */
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+
+    /* Linting - AJUSTADO para desarrollo */
     "strict": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
 
-    /* Path mapping */
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"]
-    },
-
-    /* Module imports */
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-
-    /* IMPORTANTE: Deshabilitar estas opciones problemáticas */
-    "verbatimModuleSyntax": false,
-
-    /* Type checking */
+    /* CORREGIDO: Deshabilitar para compatibilidad con plugins */
+    "noUncheckedSideEffectImports": false,
     "exactOptionalPropertyTypes": false,
+
+    /* Type checking - MEJORADO */
     "noImplicitAny": false,
     "noImplicitReturns": true,
     "noImplicitThis": true,
     "noImplicitOverride": true
   },
   "include": ["src/**/*", "src/**/*.ts", "src/**/*.tsx"],
-  "exclude": ["node_modules", "dist", "build"],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  "exclude": ["node_modules", "dist", "build"]
 }

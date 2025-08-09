@@ -1,10 +1,25 @@
 // ============================================================================
 // PLUGIN MANAGER - ORCHESTRATOR FOR ALL PLUGINS (FIXED)
-// FILE LOCATION: src/plugins/PluginManager.tsx
+// FILE LOCATION: src/plugins/PluginManager.ts
 // ============================================================================
 
 import React from "react";
 import { BasePlugin, type PluginContext, type PluginEvent } from "./BasePlugin";
+
+// ============================================================================
+// PLUGIN STATS INTERFACE
+// ============================================================================
+
+interface PluginStats {
+  totalPlugins: number;
+  activePlugins: number;
+  enabledPlugins: number;
+  pluginsByPriority?: Array<{
+    name: string;
+    priority: number;
+    position: string;
+  }>;
+}
 
 // ============================================================================
 // PLUGIN MANAGER CLASS
@@ -186,12 +201,65 @@ export class PluginManager {
   // ============================================================================
 
   /**
+   * Suscribe a eventos del sistema de plugins
+   * @param eventType - Tipo de evento
+   * @param callback - Función callback
+   */
+  addEventListener(
+    eventType: string,
+    callback: (event: PluginEvent) => void
+  ): void {
+    if (!this.eventListeners.has(eventType)) {
+      this.eventListeners.set(eventType, []);
+    }
+    this.eventListeners.get(eventType)!.push(callback);
+  }
+
+  /**
+   * Desuscribe de eventos
+   * @param eventType - Tipo de evento
+   * @param callback - Función callback a remover
+   */
+  removeEventListener(
+    eventType: string,
+    callback: (event: PluginEvent) => void
+  ): void {
+    const listeners = this.eventListeners.get(eventType);
+    if (listeners) {
+      const index = listeners.indexOf(callback);
+      if (index > -1) {
+        listeners.splice(index, 1);
+      }
+    }
+  }
+
+  /**
+   * Emite un evento a todos los listeners
+   * @param event - Evento a emitir
+   */
+  private emitEvent(event: PluginEvent): void {
+    const listeners = this.eventListeners.get(event.type) || [];
+    listeners.forEach((callback) => {
+      try {
+        callback(event);
+      } catch (error) {
+        this.log(
+          `Error in event listener for ${event.type}: ${error}`,
+          "error"
+        );
+      }
+    });
+  }
+
+  // ============================================================================
+  // NOTIFICATION METHODS
+  // ============================================================================
+
+  /**
    * Notifica cambio de tema a todos los plugins
    * @param newTheme - Nuevo tema
    */
   notifyThemeChange(newTheme: string): void {
-    this.log(`Notifying theme change: ${newTheme}`);
-
     this.plugins.forEach((plugin) => {
       try {
         plugin.onThemeChange?.(newTheme, this.context);
@@ -200,10 +268,8 @@ export class PluginManager {
           `Error notifying theme change to plugin "${plugin.name}": ${error}`,
           "error"
         );
-        this.emitEvent({ type: "PLUGIN_ERROR", plugin, error: error as Error });
       }
     });
-
     this.emitEvent({ type: "THEME_CHANGED", theme: newTheme });
   }
 
@@ -212,8 +278,6 @@ export class PluginManager {
    * @param newRoute - Nueva ruta
    */
   notifyRouteChange(newRoute: string): void {
-    this.log(`Notifying route change: ${newRoute}`);
-
     this.plugins.forEach((plugin) => {
       try {
         plugin.onRouteChange?.(newRoute, this.context);
@@ -222,64 +286,9 @@ export class PluginManager {
           `Error notifying route change to plugin "${plugin.name}": ${error}`,
           "error"
         );
-        this.emitEvent({ type: "PLUGIN_ERROR", plugin, error: error as Error });
       }
     });
-
     this.emitEvent({ type: "ROUTE_CHANGED", route: newRoute });
-  }
-
-  /**
-   * Agrega un listener de eventos
-   * @param eventType - Tipo de evento
-   * @param listener - Función listener
-   */
-  addEventListener(
-    eventType: string,
-    listener: (event: PluginEvent) => void
-  ): void {
-    if (!this.eventListeners.has(eventType)) {
-      this.eventListeners.set(eventType, []);
-    }
-    this.eventListeners.get(eventType)!.push(listener);
-  }
-
-  /**
-   * Remueve un listener de eventos
-   * @param eventType - Tipo de evento
-   * @param listener - Función listener
-   */
-  removeEventListener(
-    eventType: string,
-    listener: (event: PluginEvent) => void
-  ): void {
-    const listeners = this.eventListeners.get(eventType);
-    if (listeners) {
-      const index = listeners.indexOf(listener);
-      if (index > -1) {
-        listeners.splice(index, 1);
-      }
-    }
-  }
-
-  /**
-   * Emite un evento
-   * @param event - Evento a emitir
-   */
-  private emitEvent(event: PluginEvent): void {
-    const listeners = this.eventListeners.get(event.type);
-    if (listeners) {
-      listeners.forEach((listener) => {
-        try {
-          listener(event);
-        } catch (error) {
-          this.log(
-            `Error in event listener for "${event.type}": ${error}`,
-            "error"
-          );
-        }
-      });
-    }
   }
 
   // ============================================================================
@@ -288,55 +297,44 @@ export class PluginManager {
 
   /**
    * Renderiza todos los plugins activos
-   * @returns React.ReactNode con todos los plugins
+   * @returns Array de elementos React
    */
-  renderPlugins(): React.ReactNode {
+  renderPlugins(): React.ReactNode[] {
     const activePlugins = this.getActivePlugins();
 
-    if (activePlugins.length === 0) {
-      this.log("No active plugins to render");
-      return null;
-    }
+    return activePlugins.map((plugin) => {
+      try {
+        const pluginElement = plugin.render(this.context);
 
-    this.log(`Rendering ${activePlugins.length} active plugins`);
-
-    return activePlugins.map((plugin) =>
-      React.createElement(
-        React.Suspense,
-        {
-          key: plugin.name,
-          fallback: React.createElement(
-            "div",
-            {
-              className:
-                "fixed top-4 right-4 p-2 bg-gray-800 text-white rounded text-xs z-[9999]",
-            },
-            `Loading ${plugin.name}...`
-          ),
-        },
-        React.createElement(
+        // Wrap cada plugin en un Error Boundary
+        return React.createElement(
           PluginErrorBoundary,
           {
+            key: `plugin-${plugin.name}`,
             pluginName: plugin.name,
             onError: (error: Error) => {
               this.emitEvent({ type: "PLUGIN_ERROR", plugin, error });
             },
           },
-          plugin.render(this.context)
-        )
-      )
-    );
+          pluginElement
+        );
+      } catch (error) {
+        this.log(`Error rendering plugin "${plugin.name}": ${error}`, "error");
+        this.emitEvent({ type: "PLUGIN_ERROR", plugin, error: error as Error });
+        return null;
+      }
+    });
   }
 
   // ============================================================================
-  // UTILITY METHODS
+  // STATS & MONITORING
   // ============================================================================
 
   /**
-   * Obtiene estadísticas del manager
-   * @returns Estadísticas
+   * Obtiene estadísticas del sistema de plugins
+   * @returns Estadísticas detalladas
    */
-  getStats() {
+  getStats(): PluginStats {
     const activePlugins = this.getActivePlugins();
 
     return {
@@ -367,6 +365,10 @@ export class PluginManager {
 
     this.log("PluginManager cleanup completed");
   }
+
+  // ============================================================================
+  // LOGGING
+  // ============================================================================
 
   /**
    * MÉTODO LOG IMPLEMENTADO - ESTO ERA LO QUE FALTABA
@@ -457,7 +459,7 @@ class PluginErrorBoundary extends React.Component<
 }
 
 // ============================================================================
-// EXPORT
+// EXPORT (CORREGIDO)
 // ============================================================================
 
 export default PluginManager;

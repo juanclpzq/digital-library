@@ -11,10 +11,10 @@
 export { BasePlugin } from "./BasePlugin";
 export type { PluginContext, PluginConfig, PluginEvent } from "./BasePlugin";
 
-// Plugin Manager
+// Plugin Manager (CORREGIDO: ahora es default export)
 export { default as PluginManager } from "./PluginManager";
 
-// React Provider (solo los que existen)
+// React Provider (CORREGIDO: ahora desde .tsx)
 export {
   PluginProvider,
   usePlugins,
@@ -26,9 +26,22 @@ export {
 // BUILT-IN PLUGINS
 // ============================================================================
 
-// Development plugins
+// Development plugins (CORREGIDO: nombres de archivos)
 export { ThemeDebugPlugin } from "./ThemeDebugPlugin";
 export { PerformancePlugin } from "./PerformancePlugin";
+
+// ============================================================================
+// RE-IMPORT TYPES FOR LOCAL USE
+// ============================================================================
+
+import {
+  BasePlugin,
+  type PluginContext,
+  type PluginConfig,
+} from "./BasePlugin";
+import PluginManager from "./PluginManager";
+import { ThemeDebugPlugin } from "./ThemeDebugPlugin";
+import { PerformancePlugin } from "./PerformancePlugin";
 
 // ============================================================================
 // PLUGIN FACTORY FUNCTIONS
@@ -53,6 +66,10 @@ export const createPluginContext = (
     user: null,
     router: {
       currentPath: window.location.pathname,
+      navigate: (path: string) => {
+        // Implementar navegación si usas React Router
+        console.log("Navigate to:", path);
+      },
     },
     app: {
       version: "1.0.0",
@@ -143,8 +160,9 @@ export const PluginDevUtils = {
    */
   listActivePlugins: () => {
     if (process.env.NODE_ENV === "development") {
-      const manager = (window as unknown as { __pluginManager?: PluginManager })
-        .__pluginManager;
+      const manager = (window as any).__pluginManager as
+        | PluginManager
+        | undefined;
       if (manager) {
         const active = manager.getActivePlugins();
         console.table(
@@ -156,6 +174,10 @@ export const PluginDevUtils = {
             position: p.config.position,
           }))
         );
+      } else {
+        console.warn(
+          "Plugin manager not found. Make sure PluginProvider is mounted."
+        );
       }
     }
   },
@@ -165,11 +187,15 @@ export const PluginDevUtils = {
    */
   getDetailedStats: () => {
     if (process.env.NODE_ENV === "development") {
-      const manager = (window as unknown as { __pluginManager?: PluginManager })
-        .__pluginManager;
+      const manager = (window as any).__pluginManager as
+        | PluginManager
+        | undefined;
       if (manager) {
         return manager.getStats();
       }
+      console.warn(
+        "Plugin manager not found. Make sure PluginProvider is mounted."
+      );
     }
     return null;
   },
@@ -179,12 +205,39 @@ export const PluginDevUtils = {
    */
   forceRerender: () => {
     if (process.env.NODE_ENV === "development") {
-      const manager = (window as unknown as { __pluginManager?: PluginManager })
-        .__pluginManager;
+      const manager = (window as any).__pluginManager as
+        | PluginManager
+        | undefined;
       if (manager) {
         const context = manager.getContext();
         manager.updateContext({ ...context });
+        console.log("🔌 Forced plugin re-render");
+      } else {
+        console.warn(
+          "Plugin manager not found. Make sure PluginProvider is mounted."
+        );
       }
+    }
+  },
+
+  /**
+   * Registra el plugin manager globalmente para debugging
+   * @param manager - Instancia del PluginManager
+   */
+  registerGlobalManager: (manager: PluginManager) => {
+    if (process.env.NODE_ENV === "development") {
+      (window as any).__pluginManager = manager;
+      console.log("🔌 Plugin manager registered globally for debugging");
+    }
+  },
+
+  /**
+   * Limpia el plugin manager global
+   */
+  unregisterGlobalManager: () => {
+    if (process.env.NODE_ENV === "development") {
+      delete (window as any).__pluginManager;
+      console.log("🔌 Plugin manager unregistered from global scope");
     }
   },
 };
@@ -195,10 +248,44 @@ export const PluginDevUtils = {
 
 if (process.env.NODE_ENV === "development") {
   // Exponer utilidades globalmente para debugging
-  (
-    window as unknown as { __pluginDevUtils?: typeof PluginDevUtils }
-  ).__pluginDevUtils = PluginDevUtils;
+  (window as any).__pluginDevUtils = PluginDevUtils;
+
+  console.log("🔌 Plugin development utilities available:");
+  console.log("  - window.__pluginDevUtils.listActivePlugins()");
+  console.log("  - window.__pluginDevUtils.getDetailedStats()");
+  console.log("  - window.__pluginDevUtils.forceRerender()");
 }
+
+// ============================================================================
+// TYPE GUARDS
+// ============================================================================
+
+/**
+ * Verifica si un objeto es un plugin válido
+ * @param obj - Objeto a verificar
+ * @returns boolean
+ */
+export const isValidPlugin = (obj: unknown): obj is BasePlugin => {
+  return (
+    obj !== null &&
+    typeof obj === "object" &&
+    "name" in obj &&
+    "version" in obj &&
+    "render" in obj &&
+    "shouldRender" in obj &&
+    typeof (obj as any).render === "function" &&
+    typeof (obj as any).shouldRender === "function"
+  );
+};
+
+/**
+ * Filtra solo plugins válidos de un array
+ * @param plugins - Array de posibles plugins
+ * @returns Array de plugins válidos
+ */
+export const filterValidPlugins = (plugins: unknown[]): BasePlugin[] => {
+  return plugins.filter(isValidPlugin);
+};
 
 // ============================================================================
 // DEFAULT EXPORT
@@ -212,10 +299,20 @@ export default {
   usePlugins,
 
   // Built-in plugins
+  ThemeDebugPlugin,
+  PerformancePlugin,
+
+  // Collections
   getAllDevPlugins,
   getPluginsForEnvironment,
 
-  // Utilities
+  // Factories
   createPluginContext,
+  createThemeDebugPlugin,
+  createPerformancePlugin,
+
+  // Utilities
   PluginDevUtils,
+  isValidPlugin,
+  filterValidPlugins,
 };

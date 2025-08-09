@@ -1,5 +1,5 @@
 // ============================================================================
-// PLUGIN PROVIDER - REACT COMPONENT FOR PLUGIN SYSTEM
+// PLUGIN PROVIDER - REACT COMPONENT FOR PLUGIN SYSTEM (FIXED)
 // FILE LOCATION: src/plugins/PluginProvider.tsx
 // ============================================================================
 
@@ -256,107 +256,63 @@ export const PluginDebugger: React.FC = () => {
     "div",
     {
       className:
-        "fixed bottom-16 right-4 w-80 bg-gray-900 text-white rounded-lg border border-gray-700 z-[9998] font-mono text-xs",
+        "fixed bottom-16 right-4 p-4 bg-gray-900/95 backdrop-blur-sm text-white rounded-lg text-xs border border-gray-700 z-[9999] max-w-xs",
     },
-    // Header
     React.createElement(
       "div",
-      { className: "p-3 border-b border-gray-700" },
+      { className: "flex justify-between items-center mb-2" },
       React.createElement(
-        "h3",
-        { className: "font-bold text-purple-400" },
+        "span",
+        { className: "font-bold text-purple-300" },
         "Plugin Debugger"
+      ),
+      React.createElement(
+        "button",
+        {
+          onClick: () => setShowDebugger(false),
+          className: "text-gray-400 hover:text-white",
+        },
+        "×"
       )
     ),
-    // Content
     React.createElement(
       "div",
-      { className: "p-3 space-y-3" },
-      // Stats
+      { className: "space-y-1 mb-3" },
       React.createElement(
         "div",
-        { className: "grid grid-cols-3 gap-2 text-center" },
-        React.createElement(
-          "div",
-          null,
-          React.createElement("div", { className: "text-gray-400" }, "Total"),
-          React.createElement(
-            "div",
-            { className: "text-white font-bold" },
-            stats.totalPlugins
-          )
-        ),
-        React.createElement(
-          "div",
-          null,
-          React.createElement("div", { className: "text-gray-400" }, "Active"),
-          React.createElement(
-            "div",
-            { className: "text-green-400 font-bold" },
-            stats.activePlugins
-          )
-        ),
-        React.createElement(
-          "div",
-          null,
-          React.createElement("div", { className: "text-gray-400" }, "Enabled"),
-          React.createElement(
-            "div",
-            { className: "text-blue-400 font-bold" },
-            stats.enabledPlugins
-          )
-        )
+        null,
+        `Total: ${stats.totalPlugins} | Active: ${stats.activePlugins}`
       ),
-      // Plugin List
+      React.createElement("div", null, `Enabled: ${stats.enabledPlugins}`)
+    ),
+    React.createElement(
+      "div",
+      { className: "space-y-1" },
       React.createElement(
         "div",
-        { className: "space-y-2 max-h-40 overflow-y-auto" },
-        ...activePlugins.map((plugin) =>
+        { className: "font-bold text-green-300 mb-1" },
+        "Active Plugins:"
+      ),
+      ...activePlugins.map((plugin) =>
+        React.createElement(
+          "div",
+          {
+            key: plugin.name,
+            className: "flex justify-between items-center text-xs",
+          },
           React.createElement(
-            "div",
+            "span",
+            { className: "text-blue-300" },
+            `${plugin.name} (${plugin.config.priority})`
+          ),
+          React.createElement(
+            "button",
             {
-              key: plugin.name,
+              onClick: () => disablePlugin(plugin.name),
               className:
-                "flex items-center justify-between p-2 bg-gray-800 rounded",
+                "px-1 py-0.5 bg-red-600 hover:bg-red-700 rounded text-white",
             },
-            React.createElement(
-              "div",
-              null,
-              React.createElement(
-                "div",
-                { className: "text-white font-medium" },
-                plugin.name
-              ),
-              React.createElement(
-                "div",
-                { className: "text-gray-400" },
-                `v${plugin.version}`
-              )
-            ),
-            React.createElement(
-              "div",
-              { className: "flex items-center gap-2" },
-              React.createElement(
-                "div",
-                { className: "text-xs text-gray-500" },
-                `P${plugin.config.priority}`
-              ),
-              React.createElement(
-                "button",
-                {
-                  onClick: () =>
-                    plugin.isEnabled()
-                      ? disablePlugin(plugin.name)
-                      : enablePlugin(plugin.name),
-                  className: `px-2 py-1 rounded text-xs ${
-                    plugin.isEnabled()
-                      ? "bg-red-600 hover:bg-red-700 text-white"
-                      : "bg-green-600 hover:bg-green-700 text-white"
-                  }`,
-                },
-                plugin.isEnabled() ? "OFF" : "ON"
-              )
-            )
+            "Stop"
           )
         )
       )
@@ -365,9 +321,3 @@ export const PluginDebugger: React.FC = () => {
 
   return React.createElement(React.Fragment, null, toggleButton, debuggerPanel);
 };
-
-// ============================================================================
-// EXPORTS
-// ============================================================================
-
-export default PluginProvider;
