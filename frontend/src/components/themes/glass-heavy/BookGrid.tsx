@@ -374,7 +374,7 @@ const BookGridGlassHeavy: React.FC<BookGridProps> = ({
           <AnimatePresence mode="popLayout">
             {visibleBooks.map((book, index) => (
               <motion.div
-                key={book._id}
+                key={`glass-book-${book._id}-${index}`} // ✅ Key único con prefix glass
                 variants={bookVariants}
                 initial="hidden"
                 animate="visible"

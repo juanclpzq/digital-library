@@ -21,14 +21,12 @@ app.use(express.json());
 const connectDB = async () => {
   // Opción 1: Conexión estándar
   try {
-    console.log("🔄 Intentando conexión estándar...");
     const conn = await mongoose.connect(process.env.MONGO_URI, {
       serverSelectionTimeoutMS: 30000,
       socketTimeoutMS: 45000,
       maxPoolSize: 10,
       minPoolSize: 5,
     });
-    console.log(`✅ MongoDB Conectado (estándar): ${conn.connection.host}`);
     return;
   } catch (error) {
     console.error("❌ Conexión estándar falló:", error.message);
@@ -36,16 +34,13 @@ const connectDB = async () => {
 
   // Opción 2: Con SSL permisivo
   try {
-    console.log("🔄 Intentando con SSL permisivo...");
     const conn = await mongoose.connect(process.env.MONGO_URI, {
       tls: true,
       tlsAllowInvalidCertificates: true,
       serverSelectionTimeoutMS: 30000,
       socketTimeoutMS: 45000,
     });
-    console.log(
-      `✅ MongoDB Conectado (SSL permisivo): ${conn.connection.host}`
-    );
+
     return;
   } catch (error) {
     console.error("❌ SSL permisivo falló:", error.message);
@@ -53,15 +48,11 @@ const connectDB = async () => {
 
   // Opción 3: Connection string modificado
   try {
-    console.log("🔄 Intentando con parámetros en URL...");
     const modifiedUri =
       process.env.MONGO_URI + "&ssl=true&tlsAllowInvalidCertificates=true";
     const conn = await mongoose.connect(modifiedUri, {
       serverSelectionTimeoutMS: 30000,
     });
-    console.log(
-      `✅ MongoDB Conectado (URL modificada): ${conn.connection.host}`
-    );
     return;
   } catch (error) {
     console.error("❌ URL modificada falló:", error.message);
@@ -91,14 +82,3 @@ app.get("/", (req, res) => {
 
 // Middleware de error
 app.use(errorHandler);
-
-// Levantar servidor
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor backend escuchando en http://localhost:${PORT}`);
-  console.log(`📚 Rutas disponibles:`);
-  console.log(`   - GET  http://localhost:${PORT}/`);
-  console.log(`   - POST http://localhost:${PORT}/api/auth/register`);
-  console.log(`   - POST http://localhost:${PORT}/api/auth/login`);
-  console.log(`   - GET  http://localhost:${PORT}/api/books`);
-  console.log(`   - GET  http://localhost:${PORT}/api/metadata/isbn/:isbn`);
-});
