@@ -1,4 +1,5 @@
-// backend/index.js - VERSIÓN CON SSL ARREGLADO
+// backend/index.js - ARREGLAR CORS COMPLETAMENTE
+
 require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
@@ -11,74 +12,116 @@ const metadataRoutes = require("./routes/metadata");
 const errorHandler = require("./middleware/errorHandler");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+// ✅ CORS CONFIGURACIÓN COMPLETA PARA DESARROLLO
+app.use(
+  cors({
+    origin: [
+      "http://localhost:3000",
+      "http://localhost:5173", // Vite default port
+      "http://localhost:3001",
+      "http://127.0.0.1:5173",
+      "http://127.0.0.1:3000",
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: [
+      "Origin",
+      "X-Requested-With",
+      "Content-Type",
+      "Accept",
+      "Authorization",
+      "Cache-Control",
+      "Pragma",
+    ],
+    credentials: true,
+    optionsSuccessStatus: 200, // Para legacy browsers
+  })
+);
 
-// ✅ CONEXIÓN SIMPLIFICADA CON MANEJO DE ERRORES SSL
+// ✅ Manejo explícito de preflight requests
+app.options("*", cors());
+
+// ✅ Headers adicionales para asegurar CORS
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
+  res.header(
+    "Access-Control-Allow-Methods",
+    "GET,PUT,POST,DELETE,PATCH,OPTIONS"
+  );
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control, Pragma"
+  );
+  res.header("Access-Control-Allow-Credentials", "true");
+
+  // Responder a preflight requests inmediatamente
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
+// ✅ Middleware JSON (DESPUÉS de CORS)
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true }));
+
+// ✅ Logging para debug
+app.use((req, res, next) => {
+  console.log(
+    `${req.method} ${req.path} - Origin: ${req.headers.origin || "No origin"}`
+  );
+  next();
+});
+
+// Conectar a MongoDB
 const connectDB = async () => {
-  // Opción 1: Conexión estándar
   try {
     const conn = await mongoose.connect(process.env.MONGO_URI, {
       serverSelectionTimeoutMS: 30000,
       socketTimeoutMS: 45000,
-      maxPoolSize: 10,
-      minPoolSize: 5,
     });
-    return;
+    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
-    console.error("❌ Conexión estándar falló:", error.message);
+    console.error("❌ MongoDB connection failed:", error.message);
+    process.exit(1);
   }
-
-  // Opción 2: Con SSL permisivo
-  try {
-    const conn = await mongoose.connect(process.env.MONGO_URI, {
-      tls: true,
-      tlsAllowInvalidCertificates: true,
-      serverSelectionTimeoutMS: 30000,
-      socketTimeoutMS: 45000,
-    });
-
-    return;
-  } catch (error) {
-    console.error("❌ SSL permisivo falló:", error.message);
-  }
-
-  // Opción 3: Connection string modificado
-  try {
-    const modifiedUri =
-      process.env.MONGO_URI + "&ssl=true&tlsAllowInvalidCertificates=true";
-    const conn = await mongoose.connect(modifiedUri, {
-      serverSelectionTimeoutMS: 30000,
-    });
-    return;
-  } catch (error) {
-    console.error("❌ URL modificada falló:", error.message);
-  }
-
-  // Si todo falla
-  console.error("💥 No se pudo conectar a MongoDB con ningún método");
-  console.log("🔧 Sugerencias:");
-  console.log("   1. Verifica Network Access en MongoDB Atlas");
-  console.log("   2. Asegúrate que tu IP esté en la whitelist");
-  console.log("   3. Verifica usuario/password en Atlas");
-  process.exit(1);
 };
 
-// Conectar base de datos
 connectDB();
 
-// Configurar rutas
+// ✅ Ruta de test
+app.get("/", (req, res) => {
+  res.json({
+    message: "🚀 Servidor Digital Library funcionando",
+    port: PORT,
+    cors: "enabled",
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// ✅ Rutas API
 app.use("/api/auth", authRoutes);
 app.use("/api/books", booksRoutes);
 app.use("/api/metadata", metadataRoutes);
 
-// Ruta base
-app.get("/", (req, res) => {
-  res.send("🚀 Servidor Digital Library funcionando");
+// ✅ Manejo de rutas no encontradas
+app.use("*", (req, res) => {
+  res.status(404).json({
+    success: false,
+    message: `Route ${req.originalUrl} not found`,
+  });
 });
 
-// Middleware de error
+// ✅ Middleware de error
 app.use(errorHandler);
+
+// ✅ Iniciar servidor
+app.listen(PORT, () => {
+  console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
+  console.log(`📡 API disponible en: http://localhost:${PORT}/api`);
+  console.log(`🔧 CORS configurado para puertos: 3000, 5173, 3001`);
+  console.log(`🌐 Frontend esperado en: http://localhost:5173`);
+});
+
+module.exports = app;

@@ -1,6 +1,5 @@
 // ============================================================================
-// ADAPTIVE DASHBOARD - AUTO-SWITCHES BETWEEN THEMES
-// FILE LOCATION: src/components/shared/AdaptiveDashboard.tsx
+// ARCHIVO: src/components/shared/AdaptiveDashboard.tsx (CORRECCIÓN SIMPLE)
 // ============================================================================
 
 import React from "react";
@@ -9,44 +8,37 @@ import DashboardSoftclub from "@/components/themes/softclub/Dashboard";
 import DashboardGlassHeavy from "@/components/themes/glass-heavy/Dashboard";
 import type { DashboardProps } from "@/components/themes/softclub/Dashboard";
 
-// ============================================================================
-// ADAPTIVE DASHBOARD COMPONENT
-// ============================================================================
-
-/**
- * AdaptiveDashboard automatically renders the appropriate Dashboard variant
- * based on the current theme (Softclub or Glass Heavy)
- *
- * @example
- * ```tsx
- * <AdaptiveDashboard
- *   books={books}
- *   isLoading={loading}
- *   onBookClick={handleBookClick}
- *   onBookUpdate={handleBookUpdate}
- *   onBookDelete={handleBookDelete}
- *   onAddBook={handleAddBook}
- * />
- * ```
- */
 const AdaptiveDashboard: React.FC<DashboardProps> = (props) => {
   const theme = useTheme();
 
-  // Add glass-specific props when in glass mode
   const enhancedProps = theme.isGlassMode
-    ? { ...props, glassIntensity: theme.glassIntensity }
-    : props;
+    ? {
+        ...props,
+        glassIntensity: theme.glassIntensity,
+        theme: theme.currentTheme,
+      }
+    : { ...props, theme: theme.currentTheme };
 
-  // Render the appropriate component based on current theme
-  if (theme.isGlassMode) {
-    return <DashboardGlassHeavy {...enhancedProps} />;
-  }
-
-  return <DashboardSoftclub {...props} />;
+  // ESTO ES LA CLAVE: Wrapper con las clases de tema aplicadas
+  return (
+    <div
+      className={`theme-container ${theme.isGlassMode ? "glass-heavy-theme" : "softclub-theme"}`}
+      data-theme={theme.variant}
+      data-glass-intensity={theme.glassIntensity}
+      style={{
+        minHeight: "100vh",
+        background: theme.isGlassMode
+          ? "linear-gradient(135deg, rgba(15, 23, 42, 0.1) 0%, rgba(88, 28, 135, 0.1) 50%, rgba(15, 23, 42, 0.1) 100%)"
+          : "linear-gradient(135deg, #f8fafc 0%, rgba(6, 182, 212, 0.1) 25%, rgba(168, 85, 247, 0.1) 75%, #fdf4ff 100%)",
+      }}
+    >
+      {theme.isGlassMode ? (
+        <DashboardGlassHeavy {...enhancedProps} />
+      ) : (
+        <DashboardSoftclub {...enhancedProps} />
+      )}
+    </div>
+  );
 };
-
-// ============================================================================
-// EXPORTS
-// ============================================================================
 
 export default AdaptiveDashboard;

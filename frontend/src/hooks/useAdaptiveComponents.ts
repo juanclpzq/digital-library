@@ -1,45 +1,51 @@
 // ============================================================================
-// USE ADAPTIVE COMPONENTS HOOK - DYNAMIC COMPONENT SELECTION
-// FILE LOCATION: src/hooks/useAdaptiveComponents.ts
+// ARCHIVO: src/hooks/useAdaptiveComponents.ts (VERSIÓN COMPLETA)
 // ============================================================================
 
 import { useMemo } from "react";
 import { useTheme } from "@/theme/ThemeProvider";
-import type { BookCardProps } from "@/types";
 
 // ============================================================================
-// COMPONENT IMPORTS - FULL ARCHITECTURE (COMPONENTS WILL BE CREATED)
+// SOFTCLUB THEME COMPONENTS (TODOS)
 // ============================================================================
-
-// Softclub Theme Components
 import BookCardSoftclub from "@/components/themes/softclub/BookCard";
-import StatCardSoftclub from "@/components/themes/softclub/StatCard";
-import FilterBarSoftclub from "@/components/themes/softclub/FilterBar";
-import DashboardSoftclub from "@/components/themes/softclub/Dashboard";
 import BookGridSoftclub from "@/components/themes/softclub/BookGrid";
-import HeaderSoftclub from "@/components/themes/softclub/Header";
-import SearchBoxSoftclub from "@/components/themes/softclub/SearchBox";
 import ButtonSoftclub from "@/components/themes/softclub/Button";
-import InputSoftclub from "@/components/themes/softclub/Input";
-import ModalSoftclub from "@/components/themes/softclub/Modal";
 import CardSoftclub from "@/components/themes/softclub/Card";
+import DashboardSoftclub from "@/components/themes/softclub/Dashboard";
+import FilterBarSoftclub from "@/components/themes/softclub/FilterBar";
+import HeaderSoftclub from "@/components/themes/softclub/Header";
+import InputSoftclub from "@/components/themes/softclub/Input";
+import LoginSoftclub from "@/components/themes/softclub/Login";
+import ModalSoftclub from "@/components/themes/softclub/Modal";
+import SearchBoxSoftclub from "@/components/themes/softclub/SearchBox";
+import StatCardSoftclub from "@/components/themes/softclub/StatCard";
 
-// Glass Heavy Theme Components  
+// ============================================================================
+// GLASS HEAVY THEME COMPONENTS (TODOS)
+// ============================================================================
 import BookCardGlassHeavy from "@/components/themes/glass-heavy/BookCard";
-import StatCardGlassHeavy from "@/components/themes/glass-heavy/StatCard";
-import FilterBarGlassHeavy from "@/components/themes/glass-heavy/FilterBar";
-import DashboardGlassHeavy from "@/components/themes/glass-heavy/Dashboard";
 import BookGridGlassHeavy from "@/components/themes/glass-heavy/BookGrid";
-import HeaderGlassHeavy from "@/components/themes/glass-heavy/Header";
-import SearchBoxGlassHeavy from "@/components/themes/glass-heavy/SearchBox";
 import ButtonGlassHeavy from "@/components/themes/glass-heavy/Button";
-import InputGlassHeavy from "@/components/themes/glass-heavy/Input";
-import ModalGlassHeavy from "@/components/themes/glass-heavy/Modal";
 import CardGlassHeavy from "@/components/themes/glass-heavy/Card";
+import DashboardGlassHeavy from "@/components/themes/glass-heavy/Dashboard";
+import FilterBarGlassHeavy from "@/components/themes/glass-heavy/FilterBar";
+import HeaderGlassHeavy from "@/components/themes/glass-heavy/Header";
+import InputGlassHeavy from "@/components/themes/glass-heavy/Input";
+import LoginGlassHeavy from "@/components/themes/glass-heavy/Login";
+import ModalGlassHeavy from "@/components/themes/glass-heavy/Modal";
+import SearchBoxGlassHeavy from "@/components/themes/glass-heavy/SearchBox";
+import StatCardGlassHeavy from "@/components/themes/glass-heavy/StatCard";
 
 // ============================================================================
-// COMPONENT TYPES INTERFACES
+// INTERFACES COMPLETAS
 // ============================================================================
+
+export interface BookCardProps {
+  book: any;
+  onClick?: (book: any) => void;
+  className?: string;
+}
 
 export interface StatCardProps {
   label: string;
@@ -52,23 +58,16 @@ export interface StatCardProps {
 }
 
 export interface FilterBarProps {
-  filters: any; // TODO: Import proper filter types
-  onFiltersChange: (filters: any) => void;
-  categories: string[];
+  filters?: any;
+  onFiltersChange?: (filters: any) => void;
+  categories?: string[];
   totalResults?: number;
-  className?: string;
-}
-
-export interface DashboardProps {
-  books: any[]; // TODO: Import proper book types
-  stats: any; // TODO: Import proper stats types
-  onBookAction: (action: string, bookId: string) => void;
   className?: string;
 }
 
 export interface BookGridProps {
   books: any[];
-  onBookSelect: (book: any) => void;
+  onBookSelect?: (book: any) => void;
   loading?: boolean;
   className?: string;
 }
@@ -81,37 +80,72 @@ export interface HeaderProps {
 }
 
 export interface SearchBoxProps {
-  value: string;
-  onChange: (value: string) => void;
+  value?: string;
+  onChange?: (value: string) => void;
   placeholder?: string;
   className?: string;
 }
 
-// ============================================================================
-// ADAPTIVE COMPONENTS INTERFACE
-// ============================================================================
+export interface ButtonProps {
+  children: React.ReactNode;
+  onClick?: () => void;
+  variant?: "primary" | "secondary" | "ghost";
+  size?: "sm" | "md" | "lg";
+  className?: string;
+  disabled?: boolean;
+}
 
-export interface AdaptiveComponents {
-  // Core Components
-  BookCard: React.ComponentType<BookCardProps>;
-  StatCard: React.ComponentType<StatCardProps>;
-  FilterBar: React.ComponentType<FilterBarProps>;
-  Dashboard: React.ComponentType<DashboardProps>;
-  BookGrid: React.ComponentType<BookGridProps>;
-  
-  // Layout Components
-  Header: React.ComponentType<HeaderProps>;
-  SearchBox: React.ComponentType<SearchBoxProps>;
-  
-  // UI Components (theme-aware versions)
-  Button: React.ComponentType<any>;
-  Input: React.ComponentType<any>;
-  Modal: React.ComponentType<any>;
-  Card: React.ComponentType<any>;
+export interface InputProps {
+  value?: string;
+  onChange?: (value: string) => void;
+  placeholder?: string;
+  type?: string;
+  className?: string;
+  error?: string;
+}
+
+export interface ModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+  title?: string;
+  className?: string;
+}
+
+export interface CardProps {
+  children: React.ReactNode;
+  className?: string;
+  variant?: "default" | "elevated" | "outlined";
 }
 
 // ============================================================================
-// MAIN HOOK IMPLEMENTATION
+// ADAPTIVE COMPONENTS INTERFACE COMPLETA
+// ============================================================================
+
+export interface AdaptiveComponents {
+  // Core Library Components
+  BookCard: React.ComponentType<BookCardProps>;
+  BookGrid: React.ComponentType<BookGridProps>;
+  StatCard: React.ComponentType<StatCardProps>;
+  FilterBar: React.ComponentType<FilterBarProps>;
+  Dashboard: React.ComponentType<any>;
+
+  // Layout Components
+  Header: React.ComponentType<HeaderProps>;
+  SearchBox: React.ComponentType<SearchBoxProps>;
+
+  // UI Components
+  Button: React.ComponentType<ButtonProps>;
+  Input: React.ComponentType<InputProps>;
+  Modal: React.ComponentType<ModalProps>;
+  Card: React.ComponentType<CardProps>;
+
+  // Auth Components
+  Login: React.ComponentType<any>;
+}
+
+// ============================================================================
+// HOOK PRINCIPAL COMPLETO
 // ============================================================================
 
 export const useAdaptiveComponents = (): AdaptiveComponents => {
@@ -119,45 +153,51 @@ export const useAdaptiveComponents = (): AdaptiveComponents => {
 
   const components = useMemo(() => {
     if (theme.isGlassMode) {
-      // Glass Heavy Theme Components
+      // Glass Heavy Theme - TODOS los componentes
       return {
-        // Core Components
+        // Core Library Components
         BookCard: BookCardGlassHeavy,
+        BookGrid: BookGridGlassHeavy,
         StatCard: StatCardGlassHeavy,
         FilterBar: FilterBarGlassHeavy,
         Dashboard: DashboardGlassHeavy,
-        BookGrid: BookGridGlassHeavy,
-        
+
         // Layout Components
         Header: HeaderGlassHeavy,
         SearchBox: SearchBoxGlassHeavy,
-        
+
         // UI Components
         Button: ButtonGlassHeavy,
         Input: InputGlassHeavy,
         Modal: ModalGlassHeavy,
         Card: CardGlassHeavy,
+
+        // Auth Components
+        Login: LoginGlassHeavy,
       };
     }
 
-    // Softclub Theme Components (Default)
+    // Softclub Theme - TODOS los componentes
     return {
-      // Core Components
+      // Core Library Components
       BookCard: BookCardSoftclub,
+      BookGrid: BookGridSoftclub,
       StatCard: StatCardSoftclub,
       FilterBar: FilterBarSoftclub,
       Dashboard: DashboardSoftclub,
-      BookGrid: BookGridSoftclub,
-      
-      // Layout Components  
+
+      // Layout Components
       Header: HeaderSoftclub,
       SearchBox: SearchBoxSoftclub,
-      
+
       // UI Components
       Button: ButtonSoftclub,
       Input: InputSoftclub,
       Modal: ModalSoftclub,
       Card: CardSoftclub,
+
+      // Auth Components
+      Login: LoginSoftclub,
     };
   }, [theme.variant, theme.isGlassMode]);
 
@@ -165,200 +205,47 @@ export const useAdaptiveComponents = (): AdaptiveComponents => {
 };
 
 // ============================================================================
-// SPECIALIZED COMPONENT HOOKS
+// HOOKS ESPECIALIZADOS
 // ============================================================================
 
-/**
- * Hook for getting specific component types
- */
+export const useAdaptiveLibraryComponents = () => {
+  const components = useAdaptiveComponents();
+
+  return useMemo(
+    () => ({
+      BookCard: components.BookCard,
+      BookGrid: components.BookGrid,
+      StatCard: components.StatCard,
+      FilterBar: components.FilterBar,
+      Dashboard: components.Dashboard,
+    }),
+    [components]
+  );
+};
+
+export const useAdaptiveUIComponents = () => {
+  const components = useAdaptiveComponents();
+
+  return useMemo(
+    () => ({
+      Button: components.Button,
+      Input: components.Input,
+      Modal: components.Modal,
+      Card: components.Card,
+      Header: components.Header,
+      SearchBox: components.SearchBox,
+    }),
+    [components]
+  );
+};
+
+// ============================================================================
+// HOOK PARA COMPONENTE ESPECÍFICO
+// ============================================================================
+
 export const useAdaptiveComponent = <T extends keyof AdaptiveComponents>(
   componentName: T
 ): AdaptiveComponents[T] => {
   const components = useAdaptiveComponents();
   return components[componentName];
 };
-
-/**
- * Hook for getting layout components specifically
- */
-export const useAdaptiveLayout = () => {
-  const components = useAdaptiveComponents();
-  
-  return useMemo(() => ({
-    Header: components.Header,
-    SearchBox: components.SearchBox,
-  }), [components]);
-};
-
-/**
- * Hook for getting core business components
- */
-export const useAdaptiveBookComponents = () => {
-  const components = useAdaptiveComponents();
-  
-  return useMemo(() => ({
-    BookCard: components.BookCard,
-    BookGrid: components.BookGrid,
-    Dashboard: components.Dashboard,
-    FilterBar: components.FilterBar,
-    StatCard: components.StatCard,
-  }), [components]);
-};
-
-/**
- * Hook for getting UI components
- */
-export const useAdaptiveUI = () => {
-  const components = useAdaptiveComponents();
-  
-  return useMemo(() => ({
-    Button: components.Button,
-    Input: components.Input,
-    Modal: components.Modal,
-    Card: components.Card,
-  }), [components]);
-};
-
-// ============================================================================
-// COMPONENT FACTORY FUNCTIONS
-// ============================================================================
-
-/**
- * Create a themed version of a component
- */
-export const useThemedComponent = <T extends object>(
-  softclubComponent: React.ComponentType<T>,
-  glassHeavyComponent: React.ComponentType<T>
-) => {
-  const theme = useTheme();
-  
-  return useMemo(() => {
-    return theme.isGlassMode ? glassHeavyComponent : softclubComponent;
-  }, [theme.isGlassMode, softclubComponent, glassHeavyComponent]);
-};
-
-/**
- * Create an adaptive wrapper component
- */
-export const useAdaptiveWrapper = () => {
-  const theme = useTheme();
-  
-  return useMemo(() => {
-    const WrapperComponent = ({ 
-      children, 
-      softclubProps = {}, 
-      glassHeavyProps = {},
-      ...commonProps 
-    }: {
-      children: React.ReactNode;
-      softclubProps?: object;
-      glassHeavyProps?: object;
-    } & any) => {
-      
-      const themeProps = theme.isGlassMode ? glassHeavyProps : softclubProps;
-      
-      return (
-        <div {...commonProps} {...themeProps}>
-          {children}
-        </div>
-      );
-    };
-
-    return WrapperComponent;
-  }, [theme.isGlassMode]);
-};
-
-// ============================================================================
-// COMPONENT REGISTRY SYSTEM
-// ============================================================================
-
-/**
- * Component registry for dynamic registration
- */
-class AdaptiveComponentRegistry {
-  private softclubComponents: Map<string, React.ComponentType<any>> = new Map();
-  private glassHeavyComponents: Map<string, React.ComponentType<any>> = new Map();
-
-  register(
-    name: string, 
-    softclubComponent: React.ComponentType<any>, 
-    glassHeavyComponent: React.ComponentType<any>
-  ) {
-    this.softclubComponents.set(name, softclubComponent);
-    this.glassHeavyComponents.set(name, glassHeavyComponent);
-  }
-
-  get(name: string, variant: 'softclub' | 'glass-heavy') {
-    const registry = variant === 'glass-heavy' 
-      ? this.glassHeavyComponents 
-      : this.softclubComponents;
-    
-    return registry.get(name);
-  }
-
-  getAll(variant: 'softclub' | 'glass-heavy') {
-    const registry = variant === 'glass-heavy' 
-      ? this.glassHeavyComponents 
-      : this.softclubComponents;
-    
-    return Object.fromEntries(registry.entries());
-  }
-}
-
-// Global registry instance
-const componentRegistry = new AdaptiveComponentRegistry();
-
-/**
- * Hook for using the component registry
- */
-export const useComponentRegistry = () => {
-  const theme = useTheme();
-  
-  return useMemo(() => ({
-    register: componentRegistry.register.bind(componentRegistry),
-    get: (name: string) => componentRegistry.get(name, theme.variant),
-    getAll: () => componentRegistry.getAll(theme.variant),
-  }), [theme.variant]);
-};
-
-// ============================================================================
-// PERFORMANCE UTILITIES
-// ============================================================================
-
-/**
- * Hook for lazy loading theme components
- */
-export const useLazyAdaptiveComponent = <T>(
-  componentName: string,
-  softclubLoader: () => Promise<{ default: React.ComponentType<T> }>,
-  glassHeavyLoader: () => Promise<{ default: React.ComponentType<T> }>
-) => {
-  const theme = useTheme();
-  
-  return useMemo(async () => {
-    const loader = theme.isGlassMode ? glassHeavyLoader : softclubLoader;
-    const module = await loader();
-    return module.default;
-  }, [theme.isGlassMode, softclubLoader, glassHeavyLoader]);
-};
-
-// ============================================================================
-// EXPORTS
-// ============================================================================
-
-export default useAdaptiveComponents;
-
-// Named exports for convenience
-export {
-  useAdaptiveComponent,
-  useAdaptiveLayout,
-  useAdaptiveBookComponents,
-  useAdaptiveUI,
-  useThemedComponent,
-  useAdaptiveWrapper,
-  useComponentRegistry,
-  useLazyAdaptiveComponent,
-};
-
-// Export component registry for external use
-export { componentRegistry };

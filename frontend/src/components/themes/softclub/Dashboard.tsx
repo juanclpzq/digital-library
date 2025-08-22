@@ -1,9 +1,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useTheme } from "@/theme/ThemeProvider";
-import StatCardSoftclub from "./StatCard";
-import BookGridSoftclub from "./BookGrid";
-import FilterBarSoftclub from "./FilterBar";
+import { useAdaptiveComponents } from "@/hooks/useAdaptiveComponents";
 import type { Book, BookCategory, ReadingStatus } from "@/types";
 
 // ============================================================================
@@ -67,7 +65,7 @@ const calculateStats = (books: Book[]) => {
 };
 
 // ============================================================================
-// WELCOME HEADER COMPONENT
+// WELCOME HEADER COMPONENT (CORREGIDO)
 // ============================================================================
 
 const WelcomeHeader: React.FC<{ userName?: string }> = ({
@@ -82,7 +80,7 @@ const WelcomeHeader: React.FC<{ userName?: string }> = ({
 
   return (
     <motion.div
-      className="bg-gradient-to-br from-mint-dream via-lavender-mist/30 to-soft-cyan/20 rounded-3xl p-8 mb-8 relative overflow-hidden shadow-gentle"
+      className="bg-gradient-to-br from-mint-dream via-lavender-mist/30 to-soft-cyan/20 rounded-3xl p-8 mb-8 relative overflow-hidden shadow-lg"
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8, ease: [0.25, 0.25, 0, 1] }}
@@ -93,7 +91,7 @@ const WelcomeHeader: React.FC<{ userName?: string }> = ({
 
       <div className="relative z-10">
         <motion.h1
-          className="text-4xl font-bold bg-gradient-to-r from-deep-teal to-warm-purple bg-clip-text text-transparent mb-2"
+          className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
@@ -101,7 +99,7 @@ const WelcomeHeader: React.FC<{ userName?: string }> = ({
           {greeting()}, {userName}! 🌟
         </motion.h1>
         <motion.p
-          className="text-warm-purple/80 text-lg"
+          className="text-purple-600/80 text-lg"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
@@ -114,7 +112,7 @@ const WelcomeHeader: React.FC<{ userName?: string }> = ({
 };
 
 // ============================================================================
-// QUICK ACTIONS COMPONENT
+// QUICK ACTIONS COMPONENT (CORREGIDO)
 // ============================================================================
 
 const QuickActionsSoftclub: React.FC<{
@@ -131,13 +129,13 @@ const QuickActionsSoftclub: React.FC<{
       icon: "🔍",
       label: "Search",
       onClick: () => console.log("Search clicked"),
-      gradient: "from-lavender-mist to-gentle-purple",
+      gradient: "from-lavender-mist to-purple-400",
     },
     {
       icon: "📊",
       label: "Statistics",
       onClick: () => console.log("Stats clicked"),
-      gradient: "from-warm-coral to-sunset-pink",
+      gradient: "from-sunset-coral to-pink-400",
     },
     {
       icon: "⚙️",
@@ -157,7 +155,7 @@ const QuickActionsSoftclub: React.FC<{
       {actions.map((action, index) => (
         <motion.div
           key={action.label}
-          className={`bg-gradient-to-br ${action.gradient} rounded-2xl p-6 cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-soft shadow-gentle`}
+          className={`bg-gradient-to-br ${action.gradient} rounded-2xl p-6 cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-lg shadow-md`}
           whileHover={{ scale: 1.05, y: -4 }}
           whileTap={{ scale: 0.95 }}
           onClick={action.onClick}
@@ -184,7 +182,7 @@ const QuickActionsSoftclub: React.FC<{
 };
 
 // ============================================================================
-// MAIN DASHBOARD COMPONENT
+// MAIN DASHBOARD COMPONENT (CORREGIDO CON ADAPTIVE COMPONENTS)
 // ============================================================================
 
 const DashboardSoftclub: React.FC<DashboardProps> = ({
@@ -196,7 +194,10 @@ const DashboardSoftclub: React.FC<DashboardProps> = ({
   onAddBook,
   className = "",
 }) => {
-  const _theme = useTheme(); // Prefijo para indicar uso futuro
+  const theme = useTheme();
+
+  // 🔧 USAR COMPONENTES ADAPTATIVOS EN LUGAR DE ESPECÍFICOS
+  const { StatCard, BookGrid, FilterBar } = useAdaptiveComponents();
 
   // ============================================================================
   // STATE
@@ -306,7 +307,7 @@ const DashboardSoftclub: React.FC<DashboardProps> = ({
   if (isLoading) {
     return (
       <div
-        className={`min-h-screen bg-gradient-to-br from-cloud-white via-silver-matte/30 to-lavender-mist/10 p-6 ${className}`}
+        className={`min-h-screen bg-gradient-to-br from-slate-50 via-gray-100/30 to-lavender-mist/10 p-6 ${className}`}
       >
         <div className="flex items-center justify-center h-64">
           <motion.div
@@ -321,7 +322,7 @@ const DashboardSoftclub: React.FC<DashboardProps> = ({
 
   return (
     <div
-      className={`min-h-screen bg-gradient-to-br from-cloud-white via-silver-matte/30 to-lavender-mist/10 p-6 ${className}`}
+      className={`min-h-screen bg-gradient-to-br from-slate-50 via-gray-100/30 to-lavender-mist/10 p-6 ${className}`}
     >
       {/* Welcome Header */}
       <WelcomeHeader />
@@ -329,98 +330,73 @@ const DashboardSoftclub: React.FC<DashboardProps> = ({
       {/* Quick Actions */}
       <QuickActionsSoftclub onAddBook={onAddBook} />
 
-      {/* Stats Cards */}
+      {/* Stats Cards - USANDO COMPONENTES ADAPTATIVOS */}
       <motion.div
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.5 }}
       >
-        <StatCardSoftclub
+        <StatCard
           label="Total Books"
           value={stats.total}
-          gradient="cyan"
+          gradient="from-cyan-400 to-blue-500"
           trend="stable"
         />
-        <StatCardSoftclub
+        <StatCard
           label="Completed"
           value={stats.completed}
-          gradient="mint"
+          gradient="from-green-400 to-emerald-500"
           trend="up"
         />
-        <StatCardSoftclub
+        <StatCard
           label="Currently Reading"
           value={stats.reading}
-          gradient="coral"
+          gradient="from-orange-400 to-red-500"
           trend="stable"
         />
-        <StatCardSoftclub
+        <StatCard
           label="Completion Rate"
           value={stats.completionRate}
-          suffix="%"
-          gradient="lavender"
+          gradient="from-purple-400 to-pink-500"
           trend="up"
         />
       </motion.div>
 
-      {/* Filter Bar */}
+      {/* Filter Bar - USANDO COMPONENTES ADAPTATIVOS */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.6 }}
       >
-        <FilterBarSoftclub
-          categories={Object.values({
-            Fiction: "Fiction",
-            NonFiction: "Non-Fiction",
-            ScienceFiction: "Science Fiction",
-          } as any)}
-          selectedCategories={filters.categories}
-          onCategoriesChange={(categories) =>
-            handleFilterChange({ categories })
-          }
-          statuses={Object.values({
-            WantToRead: "want-to-read",
-            Reading: "reading",
-            Completed: "completed",
-          } as any)}
-          selectedStatuses={filters.statuses}
-          onStatusesChange={(statuses) => handleFilterChange({ statuses })}
-          searchTerm={filters.searchTerm}
-          onSearchChange={(searchTerm) => handleFilterChange({ searchTerm })}
-          sortBy={filters.sortBy}
-          onSortChange={(sortBy) => handleSortChange(sortBy as SortByOption)}
-          sortOrder={filters.sortOrder}
-          onSortOrderChange={handleSortOrderToggle}
+        <FilterBar
+          categories={[
+            "Fiction",
+            "Non-Fiction",
+            "Science Fiction",
+            "Fantasy",
+            "Mystery",
+          ]}
+          filters={filters}
+          onFiltersChange={handleFilterChange}
           totalResults={filteredBooks.length}
-          onClearFilters={() =>
-            setFilters({
-              categories: [],
-              statuses: [],
-              searchTerm: "",
-              sortBy: "title",
-              sortOrder: "asc",
-            })
-          }
         />
       </motion.div>
 
-      {/* Books Grid */}
+      {/* Books Grid - USANDO COMPONENTES ADAPTATIVOS */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.7 }}
       >
-        <BookGridSoftclub
+        <BookGrid
           books={filteredBooks}
-          onBookClick={handleBookClick}
-          onBookUpdate={onBookUpdate}
-          onBookDelete={onBookDelete}
-          isLoading={isLoading}
+          onBookSelect={handleBookClick}
+          loading={isLoading}
         />
       </motion.div>
 
-      {/* Selected Book Modal/Panel - TODO: Implement */}
+      {/* Selected Book Modal */}
       {selectedBook && (
         <motion.div
           className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
@@ -429,15 +405,15 @@ const DashboardSoftclub: React.FC<DashboardProps> = ({
           onClick={() => setSelectedBook(null)}
         >
           <motion.div
-            className="bg-gradient-to-br from-mint-dream/90 to-lavender-mist/90 backdrop-blur-xl rounded-2xl p-6 max-w-md w-full border border-white/20 shadow-soft"
+            className="bg-gradient-to-br from-mint-dream/90 to-lavender-mist/90 backdrop-blur-xl rounded-2xl p-6 max-w-md w-full border border-white/20 shadow-lg"
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-xl font-bold text-deep-teal mb-2">
+            <h3 className="text-xl font-bold text-blue-600 mb-2">
               {selectedBook.title}
             </h3>
-            <p className="text-warm-purple/80 mb-4">{selectedBook.author}</p>
+            <p className="text-purple-600/80 mb-4">{selectedBook.author}</p>
             <button
               onClick={() => setSelectedBook(null)}
               className="px-4 py-2 bg-soft-cyan/80 text-white rounded-lg hover:bg-soft-cyan transition-colors font-semibold"
