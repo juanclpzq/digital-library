@@ -1,21 +1,14 @@
-// ============================================================================
-// DASHBOARD GLASS HEAVY - INTENSE GLASSMORPHISM MAIN DASHBOARD COMPONENT
-// FILE LOCATION: src/components/themes/glass-heavy/Dashboard.tsx
-// ============================================================================
-
-import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useState } from "react";
+import { motion } from "framer-motion";
 import { useTheme } from "@/theme/ThemeProvider";
 import StatCardGlassHeavy from "./StatCard";
 import BookGridGlassHeavy from "./BookGrid";
 import FilterBarGlassHeavy from "./FilterBar";
 import GlassContainer from "./effects/GlassContainer";
-import GlassShimmer from "./effects/GlassShimmer";
-import Condensation from "./effects/Condensation";
 import type { Book, BookCategory, ReadingStatus } from "@/types";
 
 // ============================================================================
-// DASHBOARD PROPS INTERFACE (SAME AS SOFTCLUB)
+// DASHBOARD PROPS INTERFACE
 // ============================================================================
 
 export interface DashboardProps {
@@ -30,252 +23,184 @@ export interface DashboardProps {
 }
 
 // ============================================================================
+// CONSTANTS
+// ============================================================================
+
+const ALL_CATEGORIES: BookCategory[] = [
+  "Fiction",
+  "Non-Fiction",
+  "Science Fiction",
+  "Fantasy",
+  "Mystery",
+  "Romance",
+  "History",
+  "Science",
+  "Philosophy",
+  "Biography",
+  "Technology",
+  "Art",
+  "Self-Help",
+  "Business",
+  "Other",
+];
+
+const ALL_STATUSES: ReadingStatus[] = [
+  "want-to-read",
+  "reading",
+  "completed",
+  "paused",
+  "abandoned",
+  "reference",
+];
+
+type SortByOption = "title" | "author" | "rating" | "dateAdded";
+type SortOrderOption = "asc" | "desc";
+
+interface FilterState {
+  categories: BookCategory[];
+  statuses: ReadingStatus[];
+  searchTerm: string;
+  sortBy: SortByOption;
+  sortOrder: SortOrderOption;
+}
+
+// ============================================================================
 // GLASS WELCOME HEADER COMPONENT
 // ============================================================================
 
 const GlassWelcomeHeader: React.FC<{
   userName?: string;
-  intensity: string;
-}> = ({ userName = "Reader", intensity }) => {
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [isHovered, setIsHovered] = useState(false);
-
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const getGreeting = () => {
-    const hour = currentTime.getHours();
-    if (hour < 12) return "Good morning";
-    if (hour < 17) return "Good afternoon";
-    return "Good evening";
-  };
-
-  const getDateString = () => {
-    return currentTime.toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+  glassIntensity?: "whisper" | "light" | "medium" | "heavy" | "extreme";
+}> = ({ userName = "Reader", glassIntensity = "medium" }) => {
+  const greeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good Morning";
+    if (hour < 18) return "Good Afternoon";
+    return "Good Evening";
   };
 
   return (
     <GlassContainer
-      variant="panel"
-      intensity={intensity as any}
-      className="p-8 mb-8 relative"
-      onHover={setIsHovered}
-      effects={{
-        layers: true,
-        condensation: true,
-        refraction: true,
-        shimmer: isHovered,
-        ripple: false,
-        depth: true,
-      }}
+      intensity={glassIntensity}
+      className="relative p-8 mb-8 overflow-hidden"
     >
-      <motion.div
-        className="flex items-center justify-between"
-        initial={{ opacity: 0, y: -30, filter: "blur(20px)" }}
-        animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-        transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-      >
-        <div className="flex-1">
-          <motion.h1
-            className="text-5xl font-bold text-white mb-3 tracking-tight"
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3, duration: 0.8 }}
-          >
-            {getGreeting()}, {userName}!
-          </motion.h1>
-
-          <motion.p
-            className="text-white/80 font-medium text-xl backdrop-blur-sm bg-white/10 inline-block px-4 py-2 rounded-lg border border-white/20"
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.4, duration: 0.8 }}
-          >
-            {getDateString()}
-          </motion.p>
-        </div>
-
-        {/* Glass decorative book icon */}
-        <motion.div
-          className="hidden md:block relative"
-          initial={{ opacity: 0, scale: 0.8, filter: "blur(20px)" }}
-          animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-          transition={{ delay: 0.6, duration: 0.8, ease: "easeOut" }}
+      <div className="relative z-10">
+        <motion.h1
+          className="text-4xl font-bold text-white mb-2"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
         >
-          <GlassContainer
-            variant="custom"
-            intensity="heavy"
-            className="w-24 h-24 flex items-center justify-center"
-            effects={{
-              layers: false,
-              condensation: isHovered,
-              refraction: true,
-              shimmer: true,
-              ripple: false,
-              depth: false,
-            }}
-          >
-            <motion.svg
-              className="w-12 h-12 text-white/90"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-              animate={{
-                rotateY: isHovered ? 15 : 0,
-                scale: isHovered ? 1.1 : 1,
-              }}
-              transition={{ duration: 0.3 }}
-            >
-              <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z" />
-            </motion.svg>
-          </GlassContainer>
-        </motion.div>
-      </motion.div>
-
-      {/* Glass particles floating effect */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-inherit">
-        {[...Array(8)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-2 h-2 bg-white/20 rounded-full backdrop-blur-sm"
-            style={{
-              left: `${10 + Math.random() * 80}%`,
-              top: `${10 + Math.random() * 80}%`,
-            }}
-            animate={{
-              y: [0, -30, 0],
-              opacity: [0.2, 0.8, 0.2],
-              scale: [0.8, 1.4, 0.8],
-              filter: ["blur(2px)", "blur(0px)", "blur(2px)"],
-            }}
-            transition={{
-              duration: 6 + Math.random() * 4,
-              repeat: Infinity,
-              delay: Math.random() * 4,
-              ease: "easeInOut",
-            }}
-          />
-        ))}
+          {greeting()}, {userName}
+        </motion.h1>
+        <motion.p
+          className="text-white/70 text-lg"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+        >
+          Your digital library awaits
+        </motion.p>
       </div>
+
+      {/* Glass effect decorations */}
+      <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full blur-2xl" />
     </GlassContainer>
   );
 };
 
 // ============================================================================
-// GLASS QUICK ACTIONS COMPONENT
+// QUICK ACTIONS COMPONENT
 // ============================================================================
 
-const GlassQuickActions: React.FC<{
+const QuickActionsGlass: React.FC<{
   onAddBook?: () => void;
-  intensity: string;
-}> = ({ onAddBook, intensity }) => {
+  glassIntensity?: "whisper" | "light" | "medium" | "heavy" | "extreme";
+}> = ({ onAddBook, glassIntensity = "medium" }) => {
+  // ✅ Estado movido fuera del map
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
   const actions = [
     {
-      label: "Add Book",
       icon: "📚",
-      gradient: "from-cyan-400/30 to-blue-400/30",
+      label: "Add Book",
       onClick: onAddBook,
+      color: "from-blue-500/20 to-purple-500/20",
     },
     {
-      label: "Reading Goals",
-      icon: "🎯",
-      gradient: "from-purple-400/30 to-pink-400/30",
-      onClick: () => console.log("Goals clicked"),
+      icon: "🔍",
+      label: "Search",
+      onClick: () => console.log("Search clicked"),
+      color: "from-green-500/20 to-blue-500/20",
     },
     {
-      label: "Statistics",
       icon: "📊",
-      gradient: "from-emerald-400/30 to-teal-400/30",
+      label: "Statistics",
       onClick: () => console.log("Stats clicked"),
+      color: "from-purple-500/20 to-pink-500/20",
     },
     {
-      label: "Import Books",
-      icon: "📥",
-      gradient: "from-orange-400/30 to-red-400/30",
-      onClick: () => console.log("Import clicked"),
+      icon: "⚙️",
+      label: "Settings",
+      onClick: () => console.log("Settings clicked"),
+      color: "from-orange-500/20 to-red-500/20",
     },
   ];
 
   return (
     <motion.div
-      className="mb-8"
-      initial={{ opacity: 0, y: 30, filter: "blur(20px)" }}
-      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-      transition={{ delay: 0.7, duration: 0.8 }}
+      className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, delay: 0.3 }}
     >
-      <motion.h2
-        className="text-3xl font-bold text-white mb-6 tracking-tight"
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.8, duration: 0.6 }}
-      >
-        Quick Actions
-      </motion.h2>
+      {actions.map((action, index) => {
+        const isHovered = hoveredIndex === index;
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-        {actions.map((action, index) => {
-          const [isHovered, setIsHovered] = useState(false);
-
-          return (
-            <motion.div
-              key={action.label}
-              initial={{ opacity: 0, scale: 0.8, filter: "blur(15px)" }}
-              animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-              transition={{ delay: 0.9 + index * 0.1, duration: 0.6 }}
+        return (
+          <motion.div
+            key={action.label}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onHoverStart={() => setHoveredIndex(index)}
+            onHoverEnd={() => setHoveredIndex(null)}
+          >
+            <GlassContainer
+              intensity={glassIntensity}
+              className={`p-6 cursor-pointer transition-all duration-300 bg-gradient-to-br ${action.color} hover:bg-white/20`}
+              onClick={action.onClick}
             >
-              <GlassContainer
-                variant="button"
-                intensity={intensity as any}
-                interactive
-                onClick={action.onClick}
-                onHover={setIsHovered}
-                className={`p-6 text-center cursor-pointer bg-gradient-to-br ${action.gradient}`}
-                effects={{
-                  layers: true,
-                  condensation: false,
-                  refraction: true,
-                  shimmer: isHovered,
-                  ripple: true,
-                  depth: false,
+              <motion.div
+                className="text-2xl mb-2 flex justify-center"
+                animate={{
+                  scale: isHovered ? 1.2 : 1,
+                  rotateY: isHovered ? 10 : 0,
                 }}
+                transition={{ duration: 0.3 }}
               >
-                <motion.div
-                  className="text-4xl mb-3"
-                  animate={{
-                    scale: isHovered ? 1.2 : 1,
-                    rotateY: isHovered ? 10 : 0,
-                  }}
-                  transition={{ duration: 0.3 }}
-                >
-                  {action.icon}
-                </motion.div>
+                {action.icon}
+              </motion.div>
 
-                <motion.div
-                  className="text-white/90 font-semibold text-sm"
-                  animate={{
-                    y: isHovered ? -2 : 0,
-                  }}
-                  transition={{ duration: 0.2 }}
-                >
-                  {action.label}
-                </motion.div>
-              </GlassContainer>
-            </motion.div>
-          );
-        })}
-      </div>
+              <motion.div
+                className="text-white/90 font-semibold text-sm text-center"
+                animate={{
+                  y: isHovered ? -2 : 0,
+                }}
+                transition={{ duration: 0.2 }}
+              >
+                {action.label}
+              </motion.div>
+            </GlassContainer>
+          </motion.div>
+        );
+      })}
     </motion.div>
   );
 };
 
 // ============================================================================
-// STATS CALCULATION (SAME AS SOFTCLUB)
+// STATS CALCULATION
 // ============================================================================
 
 const calculateStats = (books: Book[]) => {
@@ -306,7 +231,7 @@ const calculateStats = (books: Book[]) => {
 };
 
 // ============================================================================
-// MAIN GLASS DASHBOARD COMPONENT
+// MAIN DASHBOARD COMPONENT
 // ============================================================================
 
 const DashboardGlassHeavy: React.FC<DashboardProps> = ({
@@ -319,30 +244,47 @@ const DashboardGlassHeavy: React.FC<DashboardProps> = ({
   glassIntensity = "medium",
   className = "",
 }) => {
-  const theme = useTheme();
-  const [filteredBooks, setFilteredBooks] = useState<Book[]>(books);
-  const [filters, setFilters] = useState({
-    categories: [] as BookCategory[],
-    statuses: [] as ReadingStatus[],
+  const _theme = useTheme(); // Prefijo para indicar uso futuro
+
+  // ============================================================================
+  // STATE
+  // ============================================================================
+
+  const [filters, setFilters] = useState<FilterState>({
+    categories: [],
+    statuses: [],
     searchTerm: "",
-    sortBy: "title" as const,
-    sortOrder: "asc" as const,
+    sortBy: "title",
+    sortOrder: "asc",
   });
 
+  const [selectedBook, setSelectedBook] = useState<Book | null>(null);
+
+  // ============================================================================
+  // COMPUTED VALUES
+  // ============================================================================
+
   const stats = calculateStats(books);
-  const allCategories = Array.from(new Set(books.map((b) => b.category)));
-  const allStatuses: ReadingStatus[] = [
-    "want-to-read",
-    "reading",
-    "completed",
-    "paused",
-    "abandoned",
-  ];
 
-  // Apply filters (same logic as Softclub)
-  useEffect(() => {
-    let filtered = [...books];
+  // Get available categories and statuses from actual books
+  const availableCategories = React.useMemo(() => {
+    const categoriesInBooks = Array.from(
+      new Set(books.map((book) => book.category))
+    );
+    return ALL_CATEGORIES.filter((cat) => categoriesInBooks.includes(cat));
+  }, [books]);
 
+  const availableStatuses = React.useMemo(() => {
+    const statusesInBooks = Array.from(
+      new Set(books.map((book) => book.readingStatus))
+    );
+    return ALL_STATUSES.filter((status) => statusesInBooks.includes(status));
+  }, [books]);
+
+  const filteredBooks = React.useMemo(() => {
+    let filtered = books;
+
+    // Apply filters
     if (filters.categories.length > 0) {
       filtered = filtered.filter((book) =>
         filters.categories.includes(book.category)
@@ -356,16 +298,18 @@ const DashboardGlassHeavy: React.FC<DashboardProps> = ({
     }
 
     if (filters.searchTerm) {
-      const searchTerm = filters.searchTerm.toLowerCase();
+      const term = filters.searchTerm.toLowerCase();
       filtered = filtered.filter(
         (book) =>
-          book.title.toLowerCase().includes(searchTerm) ||
-          book.author.toLowerCase().includes(searchTerm)
+          book.title.toLowerCase().includes(term) ||
+          book.author.toLowerCase().includes(term)
       );
     }
 
+    // Apply sorting
     filtered.sort((a, b) => {
       let comparison = 0;
+
       switch (filters.sortBy) {
         case "title":
           comparison = a.title.localeCompare(b.title);
@@ -376,188 +320,195 @@ const DashboardGlassHeavy: React.FC<DashboardProps> = ({
         case "rating":
           comparison = (a.rating || 0) - (b.rating || 0);
           break;
+        case "dateAdded":
+          comparison =
+            new Date(a.createdAt || "").getTime() -
+            new Date(b.createdAt || "").getTime();
+          break;
         default:
           comparison = 0;
       }
-      return filters.sortOrder === "asc" ? comparison : -comparison;
+
+      return filters.sortOrder === "desc" ? -comparison : comparison;
     });
 
-    setFilteredBooks(filtered);
+    return filtered;
   }, [books, filters]);
 
+  // ============================================================================
+  // EVENT HANDLERS
+  // ============================================================================
+
+  const handleFilterChange = (newFilters: Partial<FilterState>) => {
+    setFilters((prev) => ({ ...prev, ...newFilters }));
+  };
+
+  const handleSortChange = (sortBy: string) => {
+    setFilters((prev) => ({
+      ...prev,
+      sortBy: sortBy as SortByOption,
+    }));
+  };
+
+  const handleSortOrderToggle = () => {
+    setFilters((prev) => ({
+      ...prev,
+      sortOrder: prev.sortOrder === "asc" ? "desc" : "asc",
+    }));
+  };
+
+  const handleBookClick = (book: Book) => {
+    setSelectedBook(book);
+    onBookClick?.(book);
+  };
+
+  const handleClearFilters = () => {
+    setFilters({
+      categories: [],
+      statuses: [],
+      searchTerm: "",
+      sortBy: "title",
+      sortOrder: "asc",
+    });
+  };
+
+  // ============================================================================
+  // RENDER
+  // ============================================================================
+
+  if (isLoading) {
+    return (
+      <div className={`min-h-screen p-6 ${className}`}>
+        <div className="flex items-center justify-center h-64">
+          <motion.div
+            className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <motion.div
-      className={`min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 ${className}`}
-      initial={{ opacity: 0, filter: "blur(30px)" }}
-      animate={{ opacity: 1, filter: "blur(0px)" }}
-      transition={{ duration: 1.2 }}
-    >
-      <div className="max-w-7xl mx-auto">
-        {/* Glass Welcome Header */}
-        <GlassWelcomeHeader userName="Book Lover" intensity={glassIntensity} />
+    <div className={`min-h-screen p-6 ${className}`}>
+      {/* Welcome Header */}
+      <GlassWelcomeHeader glassIntensity={glassIntensity} />
 
-        {/* Glass Stats Cards */}
-        <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
-          initial={{ opacity: 0, y: 30, filter: "blur(20px)" }}
-          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-          transition={{ delay: 0.4, duration: 0.8 }}
-        >
-          <StatCardGlassHeavy
-            label="Total Books"
-            value={stats.total}
-            gradient="cyan"
-            trend="up"
-            trendValue={12}
-            glassIntensity={glassIntensity}
-            shimmer
-            condensation
-            icon={
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z" />
-              </svg>
-            }
-          />
+      {/* Quick Actions */}
+      <QuickActionsGlass
+        onAddBook={onAddBook}
+        glassIntensity={glassIntensity}
+      />
 
-          <StatCardGlassHeavy
-            label="Completed"
-            value={stats.completed}
-            gradient="mint"
-            trend="up"
-            trendValue={8}
-            glassIntensity={glassIntensity}
-            shimmer
-            condensation
-            icon={
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            }
-          />
+      {/* Stats Cards */}
+      <motion.div
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.4 }}
+      >
+        <StatCardGlassHeavy
+          label="Total Books"
+          value={stats.total}
+          gradient="cyan"
+          trend="stable"
+          glassIntensity={glassIntensity}
+        />
+        <StatCardGlassHeavy
+          label="Completed"
+          value={stats.completed}
+          gradient="mint"
+          trend="up"
+          glassIntensity={glassIntensity}
+        />
+        <StatCardGlassHeavy
+          label="Currently Reading"
+          value={stats.reading}
+          gradient="coral"
+          trend="stable"
+          glassIntensity={glassIntensity}
+        />
+        <StatCardGlassHeavy
+          label="Completion Rate"
+          value={stats.completionRate}
+          suffix="%"
+          gradient="lavender"
+          trend="up"
+          glassIntensity={glassIntensity}
+        />
+      </motion.div>
 
-          <StatCardGlassHeavy
-            label="Currently Reading"
-            value={stats.reading}
-            gradient="peach"
-            trend="stable"
-            glassIntensity={glassIntensity}
-            shimmer
-            condensation
-            icon={
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                <path
-                  fillRule="evenodd"
-                  d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            }
-          />
-
-          <StatCardGlassHeavy
-            label="Completion Rate"
-            value={stats.completionRate}
-            suffix="%"
-            gradient="lavender"
-            trend={stats.completionRate > 50 ? "up" : "down"}
-            trendValue={5}
-            glassIntensity={glassIntensity}
-            shimmer
-            condensation
-            particleEffect
-            icon={
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            }
-          />
-        </motion.div>
-
-        {/* Glass Quick Actions */}
-        <GlassQuickActions onAddBook={onAddBook} intensity={glassIntensity} />
-
-        {/* Glass Filter Bar */}
+      {/* Filter Bar */}
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.5 }}
+      >
         <FilterBarGlassHeavy
-          categories={allCategories}
+          categories={availableCategories}
           selectedCategories={filters.categories}
           onCategoriesChange={(categories) =>
-            setFilters((prev) => ({ ...prev, categories }))
+            handleFilterChange({ categories })
           }
-          statuses={allStatuses}
+          statuses={availableStatuses}
           selectedStatuses={filters.statuses}
-          onStatusesChange={(statuses) =>
-            setFilters((prev) => ({ ...prev, statuses }))
-          }
+          onStatusesChange={(statuses) => handleFilterChange({ statuses })}
           searchTerm={filters.searchTerm}
-          onSearchChange={(searchTerm) =>
-            setFilters((prev) => ({ ...prev, searchTerm }))
-          }
+          onSearchChange={(searchTerm) => handleFilterChange({ searchTerm })}
           sortBy={filters.sortBy}
-          onSortChange={(sortBy) => setFilters((prev) => ({ ...prev, sortBy }))}
+          onSortChange={handleSortChange}
           sortOrder={filters.sortOrder}
-          onSortOrderChange={(sortOrder) =>
-            setFilters((prev) => ({ ...prev, sortOrder }))
-          }
+          onSortOrderChange={handleSortOrderToggle}
           totalResults={filteredBooks.length}
-          isLoading={isLoading}
-          onClearFilters={() =>
-            setFilters({
-              categories: [],
-              statuses: [],
-              searchTerm: "",
-              sortBy: "title",
-              sortOrder: "asc",
-            })
-          }
+          onClearFilters={handleClearFilters}
         />
+      </motion.div>
 
-        {/* Glass Book Grid */}
+      {/* Books Grid */}
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.6 }}
+      >
         <BookGridGlassHeavy
           books={filteredBooks}
-          isLoading={isLoading}
-          onBookClick={onBookClick}
+          onBookClick={handleBookClick}
           onBookUpdate={onBookUpdate}
           onBookDelete={onBookDelete}
-          gridCols={4}
-          gap="md"
+          isLoading={isLoading}
           glassIntensity={glassIntensity}
-          showHeader={false}
         />
-      </div>
+      </motion.div>
 
-      {/* Ambient background glass effects */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
-        {[...Array(6)].map((_, i) => (
+      {/* Selected Book Modal/Panel - TODO: Implement */}
+      {selectedBook && (
+        <motion.div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          onClick={() => setSelectedBook(null)}
+        >
           <motion.div
-            key={i}
-            className="absolute w-96 h-96 backdrop-blur-3xl bg-white/2 rounded-full"
-            style={{
-              left: `${Math.random() * 120 - 10}%`,
-              top: `${Math.random() * 120 - 10}%`,
-            }}
-            animate={{
-              scale: [1, 1.4, 1],
-              opacity: [0.02, 0.08, 0.02],
-              filter: ["blur(60px)", "blur(40px)", "blur(60px)"],
-            }}
-            transition={{
-              duration: 20 + Math.random() * 10,
-              repeat: Infinity,
-              delay: Math.random() * 10,
-            }}
-          />
-        ))}
-      </div>
-    </motion.div>
+            className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 max-w-md w-full border border-white/20"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-xl font-bold text-white mb-2">
+              {selectedBook.title}
+            </h3>
+            <p className="text-white/70 mb-4">{selectedBook.author}</p>
+            <button
+              onClick={() => setSelectedBook(null)}
+              className="px-4 py-2 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-colors"
+            >
+              Close
+            </button>
+          </motion.div>
+        </motion.div>
+      )}
+    </div>
   );
 };
 

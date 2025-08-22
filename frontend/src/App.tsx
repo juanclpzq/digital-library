@@ -1,31 +1,22 @@
-// ============================================================================
-// ARCHIVO: src/App.tsx - CON SISTEMA DE PLUGINS INTEGRADO
-// DESCRIPCIÓN: Aplicación principal con sistema completo de plugins
-// ============================================================================
-
 import React, { useEffect } from "react";
 import { ThemeProvider, useTheme } from "./theme/ThemeProvider";
-import { useAuth } from "./hooks/useAuth";
+import {
+  useAuth,
+  type LoginCredentials,
+  //type RegisterData,
+} from "./hooks/useAuth";
 import { AdaptiveLoginPage } from "./components/shared/AdaptiveLogin";
 import AdaptiveDashboard from "./components/shared/AdaptiveDashboard";
-
-// ============================================================================
-// IMPORTACIONES DEL SISTEMA DE PLUGINS
-// ============================================================================
 
 import {
   PluginProvider,
   createPluginContext,
-  getAllDevPlugins,
+  //_getAllDevPlugins, // Prefijo para futuro uso
   PluginDebugger,
   createThemeDebugPlugin,
   createPerformancePlugin,
   PluginDevUtils,
 } from "./plugins";
-
-// ============================================================================
-// LOADING SCREEN COMPONENT
-// ============================================================================
 
 const LoadingScreen = () => {
   return (
@@ -48,10 +39,6 @@ const LoadingScreen = () => {
   );
 };
 
-// ============================================================================
-// AUTH GUARD COMPONENT
-// ============================================================================
-
 interface AuthGuardProps {
   children: React.ReactNode;
 }
@@ -62,112 +49,78 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
     isLoading,
     checkAuthStatus,
     login,
-    register,
+    //register,
     error,
   } = useAuth();
 
   useEffect(() => {
-    console.log("🔍 AuthGuard: Verificando estado de autenticación...");
     checkAuthStatus();
   }, [checkAuthStatus]);
 
-  // Mostrar loading mientras se verifica la autenticación
+  const handleLogin = async (credentials: LoginCredentials): Promise<void> => {
+    await login(credentials);
+  };
+
+  const handleRegister = (): void => {
+    // TODO: Implementar navegación a página de registro
+    // Por ahora, mostrar alerta
+    alert("Función de registro pendiente de implementar");
+  };
+
   if (isLoading) {
-    console.log("⏳ AuthGuard: Mostrando loading...");
     return <LoadingScreen />;
   }
 
-  // Si no está autenticado, usar AdaptiveLoginPage
   if (!isAuthenticated) {
-    console.log(
-      "🚪 AuthGuard: Usuario no autenticado, usando AdaptiveLoginPage..."
-    );
-
     return (
       <AdaptiveLoginPage
-        onLogin={login}
-        onRegister={register}
+        onLogin={handleLogin}
+        onRegister={handleRegister}
         isLoading={isLoading}
         error={error}
       />
     );
   }
 
-  // Si está autenticado, mostrar contenido protegido
-  console.log("✅ AuthGuard: Usuario autenticado, mostrando dashboard...");
   return <>{children}</>;
 };
 
-// ============================================================================
-// DASHBOARD WRAPPER COMPONENT
-// ============================================================================
-
 const DashboardWrapper: React.FC = () => {
-  const { user } = useAuth();
-  const [books, setBooks] = React.useState([]);
-  const [isLoading, setIsLoading] = React.useState(true);
+  const _user = useAuth().user; // Prefijo para indicar uso futuro
 
-  React.useEffect(() => {
-    const loadBooks = async () => {
-      try {
-        const authTokens = localStorage.getItem("authTokens");
-        const token = authTokens ? JSON.parse(authTokens).accessToken : "";
-
-        const response = await fetch("http://localhost:3000/api/books", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        const data = await response.json();
-        setBooks(data.success ? data.data : []);
-      } catch (error) {
-        console.error("Error loading books:", error);
-        setBooks([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadBooks();
-  }, []);
-
-  const mockStats = {
-    totalBooks: books.length,
-    completedBooks: books.filter((b: any) => b.readingStatus === "completed")
-      .length,
-    currentlyReading: books.filter((b: any) => b.readingStatus === "reading")
-      .length,
-    totalPages: books.reduce(
-      (acc: number, book: any) => acc + (book.pages || 0),
-      0
-    ),
-  };
+  // TODO: Mock data - será reemplazado por datos reales del backend
+  // Eliminar cuando se implementen las interfaces reales
 
   return (
     <AdaptiveDashboard
-      books={books}
-      stats={mockStats}
-      isLoading={isLoading}
-      onBookClick={(book) => console.log("📖 Clicked book:", book.title)}
-      onBookUpdate={(book) => console.log("📝 Update book:", book.title)}
-      onBookDelete={(book) => console.log("🗑️ Delete book:", book.title)}
-      onAddBook={() => console.log("➕ Add new book")}
+      books={[]} // Mock empty books array - será reemplazado con datos reales
+      isLoading={false}
+      onBookClick={(_book) => {
+        // Implementar click en libro
+      }}
+      onBookUpdate={(_book) => {
+        // Implementar actualización de libro
+      }}
+      onBookDelete={(_bookId) => {
+        // Implementar eliminación de libro
+      }}
+      onAddBook={() => {
+        // Implementar agregar libro
+      }}
     />
   );
 };
 
-// ============================================================================
-// PLUGIN CONTEXT WRAPPER
-// ============================================================================
+interface PluginContextWrapperProps {
+  children: React.ReactNode;
+}
 
-const PluginContextWrapper: React.FC<{ children: React.ReactNode }> = ({
+const PluginContextWrapper: React.FC<PluginContextWrapperProps> = ({
   children,
 }) => {
   const theme = useTheme();
-  const { user } = useAuth();
+  const _user = useAuth().user; // Prefijo para indicar uso futuro
 
-  // Crear contexto para plugins
   const pluginContext = React.useMemo(
     () =>
       createPluginContext({
@@ -178,10 +131,9 @@ const PluginContextWrapper: React.FC<{ children: React.ReactNode }> = ({
           toggleTheme: theme.toggleTheme,
           setGlassIntensity: theme.setGlassIntensity,
         },
-        user: user
+        user: _user
           ? {
-              id: user.id,
-              email: user.email,
+              email: _user.email,
               isAuthenticated: true,
             }
           : {
@@ -189,9 +141,8 @@ const PluginContextWrapper: React.FC<{ children: React.ReactNode }> = ({
             },
         router: {
           currentPath: window.location.pathname,
-          navigate: (path: string) => {
+          navigate: (_path: string) => {
             // Implementar navegación si usas React Router
-            console.log("Navigate to:", path);
           },
         },
         app: {
@@ -199,10 +150,9 @@ const PluginContextWrapper: React.FC<{ children: React.ReactNode }> = ({
           environment: process.env.NODE_ENV || "development",
         },
       }),
-    [theme, user]
+    [theme, _user]
   );
 
-  // Crear plugins según el entorno
   const plugins = React.useMemo(() => {
     if (process.env.NODE_ENV === "development") {
       return [
@@ -219,17 +169,10 @@ const PluginContextWrapper: React.FC<{ children: React.ReactNode }> = ({
     return [];
   }, []);
 
-  // Exponer plugin manager globalmente para debugging
   React.useEffect(() => {
     if (process.env.NODE_ENV === "development") {
-      console.log(
-        "🔌 Plugin system initialized with",
-        plugins.length,
-        "plugins"
-      );
-
-      // Exponer utilidades de desarrollo
-      (window as any).__pluginDevUtils = PluginDevUtils;
+      (window as unknown as Record<string, unknown>).__pluginDevUtils =
+        PluginDevUtils;
     }
   }, [plugins]);
 
@@ -241,16 +184,10 @@ const PluginContextWrapper: React.FC<{ children: React.ReactNode }> = ({
       autoCleanup={true}
     >
       {children}
-
-      {/* Plugin Debugger - Solo en desarrollo */}
       {process.env.NODE_ENV === "development" && <PluginDebugger />}
     </PluginProvider>
   );
 };
-
-// ============================================================================
-// APP CONTENT COMPONENT
-// ============================================================================
 
 const AppContent: React.FC = () => {
   return (
@@ -262,23 +199,7 @@ const AppContent: React.FC = () => {
   );
 };
 
-// ============================================================================
-// MAIN APP COMPONENT
-// ============================================================================
-
 const App: React.FC = () => {
-  console.log("🚀 App: Iniciando aplicación con sistema de plugins...");
-
-  // Configurar debugging en desarrollo
-  React.useEffect(() => {
-    if (process.env.NODE_ENV === "development") {
-      console.log("🔧 Development mode - Plugin utilities available:");
-      console.log("  - window.__pluginDevUtils.listActivePlugins()");
-      console.log("  - window.__pluginDevUtils.getDetailedStats()");
-      console.log("  - window.__pluginDevUtils.forceRerender()");
-    }
-  }, []);
-
   return (
     <ThemeProvider defaultVariant="softclub" enablePersistence={true}>
       <AppContent />
