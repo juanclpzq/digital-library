@@ -14,7 +14,7 @@ export {
   StatCardVariants,
 } from "./AdaptiveStatCard";
 
-// Additional Adaptive Components (TO BE CREATED)
+// Additional Adaptive Components (   )
 export { default as AdaptiveDashboard } from "./AdaptiveDashboard";
 export { default as AdaptiveFilterBar } from "./AdaptiveFilterBar";
 export { default as AdaptiveBookGrid } from "./AdaptiveBookGrid";

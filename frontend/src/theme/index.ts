@@ -3,22 +3,28 @@
 // FILE LOCATION: src/theme/index.ts
 // ============================================================================
 
-// Theme Configurations
-export { softclubTheme } from "./softclub";
-export { glassHeavyTheme } from "./glass-heavy";
-
-// Theme Provider & Context
+// Theme Provider & Context (Solo componentes)
 export { ThemeProvider, useTheme } from "./ThemeProvider";
-export type {
-  ThemeContextType,
-  SoftclubTheme,
-  GlassHeavyTheme,
-  ThemeVariant,
-  GlassIntensity,
-} from "./ThemeProvider";
+export type { ThemeContextType } from "./ThemeProvider";
 
-// Theme Utilities
-export * from "./utils";
+// Theme Constants & Configurations
+export {
+  softclubTheme,
+  glassHeavyTheme,
+  type ThemeVariant,
+  type GlassIntensity,
+  type SoftclubTheme,
+  type GlassHeavyTheme,
+} from "./constants";
+
+// Theme Utilities (Hooks y helpers)
+export {
+  useThemeClasses,
+  useGlassLevel,
+  useThemeContext,
+  useHasThemeProvider,
+  withTheme,
+} from "./utils";
 
 // ============================================================================
 // THEME FACTORY FUNCTIONS
@@ -29,8 +35,10 @@ export * from "./utils";
  */
 export const createThemeConfig = (
   baseTheme: "softclub" | "glass-heavy",
-  overrides?: Record<string, any>
+  overrides?: Record<string, unknown>
 ) => {
+  // Importación dinámica para evitar dependencias circulares
+  const { softclubTheme, glassHeavyTheme } = require("./constants");
   const base = baseTheme === "softclub" ? softclubTheme : glassHeavyTheme;
   return { ...base, ...overrides };
 };
@@ -43,78 +51,28 @@ export const ThemeUtils = {
   isSoftclubMode: (variant: string) => variant === "softclub",
 
   getThemeClasses: (variant: string, intensity?: string) => {
-    if (variant === "glass-heavy") {
-      const intensityMap = {
-        whisper: "backdrop-blur-[6px] bg-white/10",
-        light: "backdrop-blur-[12px] bg-white/15",
-        medium: "backdrop-blur-[20px] bg-white/20",
-        heavy: "backdrop-blur-[32px] bg-white/25",
-        extreme: "backdrop-blur-[48px] bg-white/30",
-      };
-      return (
-        intensityMap[intensity as keyof typeof intensityMap] ||
-        intensityMap.medium
-      );
-    }
-
-    return "bg-gradient-to-br from-soft-cyan via-lavender-mist to-peachy-keen";
-  },
-};
-
-// ============================================================================
-// THEME PRESETS
-// ============================================================================
-
-export const ThemePresets = {
-  // Default configurations
-  Default: {
-    variant: "softclub" as const,
-    glassIntensity: "medium" as const,
+    const isGlass = variant === "glass-heavy";
+    return {
+      container: isGlass
+        ? `glass-container glass-${intensity || "medium"}`
+        : "softclub-container",
+      background: isGlass
+        ? "bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900"
+        : "bg-gradient-to-br from-slate-50 via-cyan-50/50 to-purple-50/50",
+    };
   },
 
-  // Glass Heavy presets
-  GlassWhisper: {
-    variant: "glass-heavy" as const,
-    glassIntensity: "whisper" as const,
+  validateThemeVariant: (
+    variant: string
+  ): variant is "softclub" | "glass-heavy" => {
+    return variant === "softclub" || variant === "glass-heavy";
   },
 
-  GlassStandard: {
-    variant: "glass-heavy" as const,
-    glassIntensity: "medium" as const,
+  validateGlassIntensity: (
+    intensity: string
+  ): intensity is "whisper" | "light" | "medium" | "heavy" | "extreme" => {
+    return ["whisper", "light", "medium", "heavy", "extreme"].includes(
+      intensity
+    );
   },
-
-  GlassIntense: {
-    variant: "glass-heavy" as const,
-    glassIntensity: "extreme" as const,
-  },
-
-  // Softclub presets
-  SoftclubClassic: {
-    variant: "softclub" as const,
-    glassIntensity: "medium" as const,
-  },
-};
-
-// ============================================================================
-// THEME VALIDATION
-// ============================================================================
-
-export const validateThemeConfig = (config: any) => {
-  const validVariants = ["softclub", "glass-heavy"];
-  const validIntensities = ["whisper", "light", "medium", "heavy", "extreme"];
-
-  if (!validVariants.includes(config.variant)) {
-    console.warn(`Invalid theme variant: ${config.variant}`);
-    return false;
-  }
-
-  if (
-    config.glassIntensity &&
-    !validIntensities.includes(config.glassIntensity)
-  ) {
-    console.warn(`Invalid glass intensity: ${config.glassIntensity}`);
-    return false;
-  }
-
-  return true;
 };

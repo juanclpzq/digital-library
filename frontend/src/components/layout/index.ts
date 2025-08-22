@@ -11,7 +11,7 @@
 export { default as AppLayout } from "./AppLayout";
 export type { AppLayoutProps } from "./AppLayout";
 
-// Additional layout components (TO BE CREATED)
+// Additional layout components (  )
 // export { default as PageLayout } from "./PageLayout";
 // export { default as Navigation } from "./Navigation";
 // export { default as Sidebar } from "./Sidebar";
